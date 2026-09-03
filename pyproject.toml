@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "segmetric"
+version = "0.1.0"
+description = "SegMetric: tools for segmenting, cropping, and measuring scanned insect wing/leg panels. Includes segmetric.tag (segment/crop/name), segmetric.set (filename preset builder), segmetric.scale (ArUco scale + crop), and segmetric.prepare (combined tag+set+scale workflow)."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "PyQt6>=6.6",
+    "opencv-python>=4.8",
+    "numpy>=1.24",
+    "pillow>=10.0",
+    "pymupdf>=1.23",
+    "easyocr>=1.7",
+    "scikit-image>=0.21",
+    "scipy>=1.10",
+]
+
+[project.scripts]
+segmetric-tag = "segmetric.tag.gui.app:main"
+segmetric-set = "segmetric.set.gui.app:main"
+segmetric-scale = "segmetric.scale.gui.app:main"
+segmetric-prepare = "segmetric.prepare.gui.app:main"
+segmetric-mask = "segmetric.mask.gui.app:main"
+segmetric-segment = "segmetric.segment.gui.app:main"
+segmetric-landmark = "segmetric.landmark.gui.app:main"
+segmetric-measure = "segmetric.measure.gui.app:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

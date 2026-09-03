@@ -1,0 +1,289 @@
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
+
+from segmetric.errors import SegMetricError
+from segmetric.prepare.core.metadata import apply_preset_to_filename
+from segmetric.set.core.presets import load_preset
+
+from ..core.matching import match_crops
+
+
+class SetupPage(QWidget):
+    """Required Scales file + Crops folder; optional Metadata preset,
+    Masks folder (recommended, used only as a visual dimming reference
+    while placing landmarks -- never a hard constraint on where you can
+    click), and an object-id filter (once a preset with an object-id
+    column is loaded) that narrows the working set. Placement itself is
+    freeform for every crop -- there's no batch-type/preset choice to make
+    here, unlike segmetric.mask/segment.
+    """
+
+    ready_changed = pyqtSignal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.scales_file = None
+        self.crops_folder = None
+        self.masks_folder = None
+        self.metadata_preset = None
+        self._discovered_object_ids = []
+        self._object_id_checkboxes = {}
+        self._build_ui()
+
+    def _build_ui(self):
+        outer = QVBoxLayout(self)
+        content = QWidget()
+        layout = QVBoxLayout(content)
+
+        inputs_group = QGroupBox("Inputs")
+        inputs_layout = QFormLayout(inputs_group)
+
+        self.scales_line = QLineEdit()
+        self.scales_line.setReadOnly(True)
+        scales_browse = QPushButton("Browse…")
+        scales_browse.clicked.connect(self.on_browse_scales)
+        scales_row = QHBoxLayout()
+        scales_row.addWidget(self.scales_line)
+        scales_row.addWidget(scales_browse)
+        inputs_layout.addRow("Scales file (required):", scales_row)
+
+        scales_hint = QLabel(
+            "upload scales.csv (segmetric.scale) or summary.csv (segmetric.prepare) "
+        )
+        scales_hint.setStyleSheet("color: gray;")
+        inputs_layout.addRow("", scales_hint)
+
+        self.crops_line = QLineEdit()
+        self.crops_line.setReadOnly(True)
+        crops_browse = QPushButton("Browse…")
+        crops_browse.clicked.connect(self.on_browse_crops)
+        crops_row = QHBoxLayout()
+        crops_row.addWidget(self.crops_line)
+        crops_row.addWidget(crops_browse)
+        inputs_layout.addRow("Crops folder (required):", crops_row)
+
+        self.masks_line = QLineEdit()
+        self.masks_line.setReadOnly(True)
+        masks_browse = QPushButton("Browse…")
+        masks_browse.clicked.connect(self.on_browse_masks)
+        masks_clear = QPushButton("Clear")
+        masks_clear.clicked.connect(self.on_clear_masks)
+        masks_row = QHBoxLayout()
+        masks_row.addWidget(self.masks_line)
+        masks_row.addWidget(masks_browse)
+        masks_row.addWidget(masks_clear)
+        inputs_layout.addRow("Masks folder (optional):", masks_row)
+
+        masks_hint = QLabel(
+            "load segmetric.mask masks output as visual refrence"
+        )
+        masks_hint.setStyleSheet("color: #b06a00;")
+        masks_hint.setWordWrap(True)
+        inputs_layout.addRow("", masks_hint)
+
+        self.remove_blank_checkbox = QCheckBox("Remove files tagged _blank")
+        self.remove_blank_checkbox.setChecked(True)
+        self.remove_blank_checkbox.toggled.connect(self._on_inputs_changed)
+        inputs_layout.addRow("", self.remove_blank_checkbox)
+
+        blank_hint = QLabel(
+            " "
+        )
+        blank_hint.setStyleSheet("color: gray;")
+        blank_hint.setWordWrap(True)
+        inputs_layout.addRow("", blank_hint)
+
+        self.mask_warning_label = QLabel("")
+        self.mask_warning_label.setStyleSheet("color: #b06a00;")
+        self.mask_warning_label.setWordWrap(True)
+        inputs_layout.addRow("", self.mask_warning_label)
+
+        self.preset_line = QLineEdit()
+        self.preset_line.setReadOnly(True)
+        preset_browse = QPushButton("Load…")
+        preset_browse.clicked.connect(self.on_browse_preset)
+        preset_clear = QPushButton("Clear")
+        preset_clear.clicked.connect(self.on_clear_preset)
+        preset_row = QHBoxLayout()
+        preset_row.addWidget(self.preset_line)
+        preset_row.addWidget(preset_browse)
+        preset_row.addWidget(preset_clear)
+        inputs_layout.addRow("Metadata preset (optional):", preset_row)
+
+        preset_hint = QLabel(
+            "enables the use of multiple filters based on Object ID. "
+        )
+        preset_hint.setStyleSheet("color: gray;")
+        preset_hint.setWordWrap(True)
+        inputs_layout.addRow("", preset_hint)
+
+        self.preset_status_label = QLabel("No preset loaded.")
+        inputs_layout.addRow("", self.preset_status_label)
+
+        layout.addWidget(inputs_group)
+
+        self.object_id_filter_group = QGroupBox("Object-ID filter (optional)")
+        self.object_id_filter_group.setVisible(False)
+        object_id_filter_layout = QVBoxLayout(self.object_id_filter_group)
+        object_id_filter_layout.addWidget(
+            QLabel("Only process crops with these object ids")
+        )
+        self.object_ids_container = QWidget()
+        self.object_ids_layout = QVBoxLayout(self.object_ids_container)
+        object_id_filter_layout.addWidget(self.object_ids_container)
+        layout.addWidget(self.object_id_filter_group)
+
+        layout.addStretch(1)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
+
+    # -------------------------------------------------------------- state
+    def is_ready(self):
+        return bool(self.scales_file and self.crops_folder)
+
+    def _preset_has_object_id(self):
+        return self.metadata_preset is not None and self.metadata_preset.object_id_column is not None
+
+    def selected_object_ids(self):
+        """None if there's no object-id filter active at all (nothing to
+        filter by); otherwise the set of object ids currently checked.
+        """
+        if not self._object_id_checkboxes:
+            return None
+        return {oid for oid, cb in self._object_id_checkboxes.items() if cb.isChecked()}
+
+    def _emit_ready(self):
+        self.ready_changed.emit(self.is_ready())
+
+    def _on_inputs_changed(self, *_args):
+        self._refresh_object_id_filter()
+        self._emit_ready()
+
+    # -------------------------------------------------------------- browse
+    def on_browse_scales(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select scales file", "", "CSV files (*.csv)")
+        if not path:
+            return
+        self.scales_file = path
+        self.scales_line.setText(path)
+        self._on_inputs_changed()
+
+    def on_browse_crops(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select crops folder")
+        if not folder:
+            return
+        self.crops_folder = folder
+        self.crops_line.setText(folder)
+        self._on_inputs_changed()
+
+    def on_browse_masks(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select masks folder")
+        if not folder:
+            return
+        self.masks_folder = folder
+        self.masks_line.setText(folder)
+        self._on_inputs_changed()
+
+    def on_clear_masks(self):
+        self.masks_folder = None
+        self.masks_line.clear()
+        self._on_inputs_changed()
+
+    def on_browse_preset(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Load metadata preset", "", "JSON files (*.json)"
+        )
+        if not path:
+            return
+        try:
+            preset = load_preset(path)
+        except SegMetricError as exc:
+            QMessageBox.critical(self, "SegMetric.Landmark — Error", str(exc))
+            return
+        self.metadata_preset = preset
+        self.preset_line.setText(path)
+        object_id_note = (
+            f"object-id column: {preset.object_id_column}"
+            if preset.object_id_column
+            else "no object-id column assigned"
+        )
+        self.preset_status_label.setText(f"Loaded '{preset.name}' ({object_id_note}).")
+        self._on_inputs_changed()
+
+    def on_clear_preset(self):
+        self.metadata_preset = None
+        self.preset_line.clear()
+        self.preset_status_label.setText("No preset loaded.")
+        self._on_inputs_changed()
+
+    # ----------------------------------------------------- object-id filter
+    def _refresh_object_id_filter(self):
+        self.mask_warning_label.setText("")
+        ready_for_scan = self.scales_file and self.crops_folder and self._preset_has_object_id()
+        self.object_id_filter_group.setVisible(bool(ready_for_scan))
+        if not ready_for_scan:
+            self._discovered_object_ids = []
+            self._object_id_checkboxes = {}
+            self._clear_object_ids_layout()
+            return
+
+        try:
+            matched, _unmatched, no_mask = match_crops(
+                self.crops_folder,
+                self.scales_file,
+                self.masks_folder,
+                exclude_blank_tagged=self.remove_blank_checkbox.isChecked(),
+            )
+        except SegMetricError:
+            return  # surfaced properly when Next is actually clicked
+
+        if self.masks_folder and no_mask:
+            self.mask_warning_label.setText(
+                f"⚠ {len(no_mask)} of {len(matched)} matched crop(s) have no usable "
+                "mask and will have no dimming reference while placing landmarks."
+            )
+
+        counts = {}
+        for item in matched:
+            row = apply_preset_to_filename(item.original_stem, self.metadata_preset)
+            object_id = row.get(self.metadata_preset.object_id_column)
+            if object_id:
+                counts[object_id] = counts.get(object_id, 0) + 1
+
+        if list(counts.keys()) == self._discovered_object_ids and self._object_id_checkboxes:
+            return  # unchanged -- keep the user's current checkbox choices
+
+        self._discovered_object_ids = sorted(counts)
+        self._rebuild_object_ids_layout(counts)
+
+    def _clear_object_ids_layout(self):
+        while self.object_ids_layout.count():
+            item = self.object_ids_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+    def _rebuild_object_ids_layout(self, counts):
+        self._clear_object_ids_layout()
+        self._object_id_checkboxes = {}
+        for object_id in sorted(counts):
+            cb = QCheckBox(f"{object_id} ({counts[object_id]})")
+            cb.setChecked(True)
+            self.object_ids_layout.addWidget(cb)
+            self._object_id_checkboxes[object_id] = cb
