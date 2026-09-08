@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         # No-markers manual mode -- see _build_manual_controls/on_set_scale/
         # on_set_crop. _manual_crop_bbox_by_name stays None both before any
         # crop is configured and whenever "No crop" is selected; on_run
-        # only treats it as "no cropping" when the no-crop radio itself is
+        # only treats it as "no cropping" when the no-crop is
         # checked (see _effective_crop_bbox_by_name), so switching crop
         # modes never accidentally reuses a stale configuration.
         self._manual_scale_by_name = {}
@@ -65,7 +65,9 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._update_run_button_state()
 
-    # ------------------------------------------------------------------ UI
+    # ------------------------------------------------------------------ 
+    #UI
+    # ------------------------------------------------------------------ 
     def _build_ui(self):
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
@@ -141,6 +143,24 @@ class MainWindow(QMainWindow):
         spacing_hint.setStyleSheet("color: gray;")
         spacing_hint.setWordWrap(True)
         scale_layout.addRow("", spacing_hint)
+
+        self.group_size_spin = QSpinBox()
+        self.group_size_spin.setRange(0, 9999)
+        self.group_size_spin.setSpecialValueText("Off")
+        self.group_size_spin.setValue(DEFAULTS.group_size)
+        self.group_size_spin.valueChanged.connect(self.on_settings_changed)
+        scale_layout.addRow("Panels per scan:", self.group_size_spin)
+
+        group_size_hint = QLabel(
+            "(Optional) If a panel's markers can't be found: "
+            "Off: one median across every file in the batch. "
+            "On: enter the number of panels the original scan was split "
+            "into, then use the median scale from that original scan "
+            "instead of the whole batch."
+        )
+        group_size_hint.setStyleSheet("color: gray;")
+        group_size_hint.setWordWrap(True)
+        scale_layout.addRow("", group_size_hint)
 
         self.blob_fallback_checkbox = QCheckBox("Use blob-detection fallback")
         self.blob_fallback_checkbox.setChecked(DEFAULTS.use_blob_fallback)
@@ -553,6 +573,7 @@ class MainWindow(QMainWindow):
             crop_v_size_pct=self.crop_v_size_spin.value(),
             crop_h_anchor=self._current_crop_h_anchor(),
             crop_h_size_pct=self.crop_h_size_spin.value(),
+            group_size=self.group_size_spin.value(),
         )
 
     def _apply_settings_to_controls(self, settings: ScaleSettings):
@@ -576,8 +597,9 @@ class MainWindow(QMainWindow):
         self.crop_v_size_spin.setValue(settings.crop_v_size_pct)
         self._set_crop_h_anchor(settings.crop_h_anchor)
         self.crop_h_size_spin.setValue(settings.crop_h_size_pct)
-        # If the loaded preset customized the thresholds, reveal them rather
-        # than hiding an active customization behind the collapsed checkbox.
+        self.group_size_spin.setValue(settings.group_size)
+        # Show loaded preset customized the thresholds
+        
         customized = (
             settings.adaptive_thresh_constant != DEFAULTS.adaptive_thresh_constant
             or settings.adaptive_thresh_win_size_min != DEFAULTS.adaptive_thresh_win_size_min
@@ -659,7 +681,9 @@ class MainWindow(QMainWindow):
         self.manual_group.setEnabled(enabled)
         self.crop_region_group.setEnabled(enabled)
 
-    # --------------------------------------------------------- marker mode
+    # -------------------------------------------------------------- 
+    # "Marker Mode"
+    # -------------------------------------------------------------- 
     def _on_marker_mode_changed(self, _checked):
         no_markers = self.no_markers_radio.isChecked()
         self.scale_group.setVisible(not no_markers)

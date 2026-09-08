@@ -44,6 +44,15 @@ def test_use_blob_fallback_round_trips(tmp_path):
     assert load_scale_preset(path).use_blob_fallback is False
 
 
+def test_group_size_round_trips(tmp_path):
+    path = os.path.join(tmp_path, "preset.json")
+    save_scale_preset(path, ScaleSettings(group_size=16))
+    assert load_scale_preset(path).group_size == 16
+
+    save_scale_preset(path, ScaleSettings())
+    assert load_scale_preset(path).group_size == 0
+
+
 def test_load_missing_fields_falls_back_to_defaults(tmp_path):
     path = os.path.join(tmp_path, "partial.json")
     with open(path, "w") as f:
@@ -64,6 +73,7 @@ def test_load_missing_fields_falls_back_to_defaults(tmp_path):
     assert loaded.crop_v_size_pct == defaults.crop_v_size_pct
     assert loaded.crop_h_anchor == defaults.crop_h_anchor
     assert loaded.crop_h_size_pct == defaults.crop_h_size_pct
+    assert loaded.group_size == defaults.group_size
 
 
 def test_load_missing_file_raises_segmetric_error(tmp_path):

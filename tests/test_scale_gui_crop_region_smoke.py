@@ -62,6 +62,57 @@ def test_apply_settings_to_controls_sets_crop_radios_and_spins(qapp):
     assert window._current_settings().crop_h_anchor == "left"
 
 
+def test_default_group_size_is_off(qapp):
+    window = MainWindow()
+    assert window.group_size_spin.value() == 0
+    assert window._current_settings().group_size == 0
+
+
+def test_group_size_control_round_trips_through_current_settings(qapp):
+    window = MainWindow()
+    window.group_size_spin.setValue(16)
+    assert window._current_settings().group_size == 16
+
+
+def test_apply_settings_to_controls_sets_group_size(qapp):
+    window = MainWindow()
+    window._apply_settings_to_controls(ScaleSettings(group_size=8))
+    assert window.group_size_spin.value() == 8
+    assert window._current_settings().group_size == 8
+
+
+def test_group_size_off_is_passed_to_the_worker_as_none(qapp, monkeypatch):
+    """0 ("Off" in the spinbox) must reach run_scale_job as group_size=None
+    -- today's unchanged whole-batch-median behavior -- not literally 0
+    (which run_scale_job would also treat as "off" per its own `not
+    group_size` check, but the explicit None is what the docstring/tests
+    for run_scale_job itself are written against).
+    """
+    from segmetric.scale.gui.worker import ScaleJobWorker
+
+    captured = {}
+
+    def fake_run_scale_job(*args, **kwargs):
+        captured.update(kwargs)
+        raise SystemExit  # stop before actually touching any files
+
+    monkeypatch.setattr("segmetric.scale.gui.worker.run_scale_job", fake_run_scale_job)
+
+    worker = ScaleJobWorker("in", "out", settings=ScaleSettings(group_size=0))
+    try:
+        worker.run()
+    except SystemExit:
+        pass
+    assert captured["group_size"] is None
+
+    worker = ScaleJobWorker("in", "out", settings=ScaleSettings(group_size=16))
+    try:
+        worker.run()
+    except SystemExit:
+        pass
+    assert captured["group_size"] == 16
+
+
 def test_crop_region_group_hidden_in_no_markers_mode(qapp):
     window = MainWindow()
     assert window.crop_region_group.isVisibleTo(window) is True

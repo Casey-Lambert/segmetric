@@ -44,6 +44,17 @@ DEFAULT_CROP_V_SIZE_PCT = 50
 DEFAULT_CROP_H_ANCHOR = "center"
 DEFAULT_CROP_H_SIZE_PCT = 100
 
+# 0 means "off" -- run_scale_job's group_size=None behavior: one flat
+# median across the whole batch when markers fail. A positive value here
+# is passed through as group_size=N, chunking the batch into consecutive
+# groups of N (e.g. panels-per-scan) so the fallback median for a failed
+# panel comes from its own scan, not blended across every scan in the
+# input folder. segmetric.prepare gets this "for free" by passing
+# rows*cols (it does the splitting itself, so it already knows the
+# count); standalone segmetric.scale has no other way to know it, since
+# it only ever receives an already-split folder of crops.
+DEFAULT_GROUP_SIZE = 0
+
 
 @dataclass
 class ScaleSettings:
@@ -79,3 +90,5 @@ class ScaleSettings:
     crop_v_size_pct: int = DEFAULT_CROP_V_SIZE_PCT
     crop_h_anchor: str = DEFAULT_CROP_H_ANCHOR
     crop_h_size_pct: int = DEFAULT_CROP_H_SIZE_PCT
+
+    group_size: int = DEFAULT_GROUP_SIZE

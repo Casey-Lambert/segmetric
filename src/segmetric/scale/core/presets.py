@@ -25,6 +25,7 @@ _FIELDS = [
     "crop_v_size_pct",
     "crop_h_anchor",
     "crop_h_size_pct",
+    "group_size",
 ]
 
 

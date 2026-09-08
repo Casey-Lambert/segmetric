@@ -36,6 +36,7 @@ class ScaleJobWorker(QThread):
                 progress_cb=lambda frac, msg: self.progress.emit(frac, msg),
                 should_stop=self.isInterruptionRequested,
                 output_format=self.output_format,
+                group_size=self.settings.group_size or None,
             )
             self.finished_ok.emit(result)
         except SegMetricError as exc:
