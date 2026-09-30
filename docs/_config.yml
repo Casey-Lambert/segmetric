@@ -1,0 +1,21 @@
+title: SegMetric
+description: Tools for segmenting, cropping, and measuring scanned insect wing/leg panels.
+theme: minima
+
+header_pages:
+  - tag.md
+  - set.md
+  - scale.md
+  - prepare.md
+  - mask.md
+  - segment.md
+  - landmark.md
+  - measure.md
+
+minima:
+  skin: auto
+
+github_username: Casey-Lambert
+repository: Casey-Lambert/segmetric
+
+markdown: kramdown
