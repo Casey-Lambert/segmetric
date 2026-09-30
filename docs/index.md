@@ -4,7 +4,7 @@ title: SegMetric
 permalink: /
 ---
 
-Tools for segmenting, cropping, and measuring scanned insect wing/leg panels.
+![SegMetric](assets/images/logo.png)
 
 SegMetric is eight PyQt6 desktop tools that cover a full workflow: split a
 scan into panels, build a naming/metadata scheme, compute a real-world
