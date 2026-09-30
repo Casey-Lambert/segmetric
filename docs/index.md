@@ -5,7 +5,7 @@ permalink: /
 ---
 
 <p align="center">
-  <img src="assets/images/logo.png" alt="SegMetric">
+  <img src="assets/images/logo.png" alt="SegMetric" width="600">
 </p>
 
 SegMetric is eight PyQt6 desktop tools that cover a full workflow: split a
