@@ -1,5 +1,5 @@
 title: SegMetric
-description: Tools for segmenting, cropping, and measuring scanned insect wing/leg panels.
+description: Tools for converting, segmenting, cropping, and measuring images.
 theme: minima
 
 header_pages:
