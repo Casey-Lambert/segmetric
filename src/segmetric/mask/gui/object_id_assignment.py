@@ -1,3 +1,4 @@
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -57,11 +58,10 @@ class _GroupRow(QGroupBox):
         self.filter_editor.load_settings(group.filter)
 
 
+
 class ObjectIdAssignmentWidget(QWidget):
-    """§4: auto-discovered object ids + many-to-one id -> filter grouping.
-    Object IDs are comma-separated per group (not one-per-filter), matching
-    your spec's requirement. Run/Next stays blocked (via ready_changed)
-    until every discovered id is claimed by exactly one group.
+    """ auto-discovered object ids + many-to-one id -> filter grouping
+
     """
 
     ready_changed = pyqtSignal(bool)
@@ -120,7 +120,9 @@ class ObjectIdAssignmentWidget(QWidget):
             self.discovered_label.setText("No object ids found among the matched crops.")
         self._update_coverage()
 
-    # -------------------------------------------------------------- groups
+    ###------------------------------------------------------------- groups
+    #
+
     def add_group(self):
         row = _GroupRow(len(self._rows) + 1)
         row.changed.connect(self._update_coverage)
@@ -141,7 +143,7 @@ class ObjectIdAssignmentWidget(QWidget):
         for row in list(self._rows):
             self._remove_group(row)
 
-    # -------------------------------------------------------------- coverage
+    # ---------------------------------------------
     def _claims(self):
         """Return (claimed: {object_id: [group_indices]}, unknown: set[str])."""
         claimed = {}
@@ -187,7 +189,7 @@ class ObjectIdAssignmentWidget(QWidget):
                 resolver[object_id] = settings
         return resolver
 
-    # -------------------------------------------------------------- template
+    # -------------------------------------------------------------- mask template_
     def on_load_mapping(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Load mapping template", "", "JSON files (*.json)"
@@ -223,3 +225,5 @@ class ObjectIdAssignmentWidget(QWidget):
             save_object_id_mapping(path, groups)
         except SegMetricError as exc:
             QMessageBox.critical(self, "SegMetric.Mask — Error", str(exc))
+
+

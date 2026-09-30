@@ -1,13 +1,6 @@
-"""The Mask stage of segmetric-measure's Run sequence: starts a real
-background MaskJobWorker (same as segmetric.mask's own standalone tool)
-and shows the same results table + optional per-row correction, then a
-Continue button hands off to the next enabled stage. Ported from
-segmetric.mask.gui.main_window.MainWindow's results page + edit/review/
-save-correction methods -- reused as literally as possible (ReviewDialog/
-CorrectionDialog are duck-typed against a "main_window" object exposing
-mask_result/_crop_by_filename/save_corrected_row, which this page
-implements so they work completely unmodified).
-"""
+
+"""Mask step """
+
 import csv
 import os
 
@@ -39,8 +32,8 @@ TABLE_COLUMNS = ["", "File", "Length (mm)", "Width (mm)", "Status", "Tag", ""]
 
 
 class MaskStagePage(QWidget):
-    finished = pyqtSignal()  # user clicked Continue
-    back_requested = pyqtSignal()  # user clicked Back to Setup after an error
+    finished = pyqtSignal()  # click-to-continue
+    back_requested = pyqtSignal()  # clicked "Back" to return to "Setup" 
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,7 +44,7 @@ class MaskStagePage(QWidget):
         self._crop_by_filename = {}
         self._build_ui()
 
-    # ------------------------------------------------------------------ UI
+    ##-------------------------------------------------------------GUI
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("<b>Mask</b> — generating masks and measurements…"))
@@ -93,14 +86,14 @@ class MaskStagePage(QWidget):
         nav_row.addWidget(self.continue_btn)
         layout.addLayout(nav_row)
 
-    # ------------------------------------------------------------- logging
+    #------------------------------------------------------------ logging
     def _log(self, message):
         self.log_view.appendPlainText(message)
 
     def _show_error(self, message):
         QMessageBox.critical(self, "SegMetric.Measure — Mask", message)
 
-    # -------------------------------------------------------------- start
+    #-------------------------------------------------------------- start
     def start(self, matched_crops, filter_resolver, output_folder, metadata_preset=None):
         self.matched_crops = matched_crops
         self.output_folder = output_folder
@@ -154,7 +147,7 @@ class MaskStagePage(QWidget):
                 self._log(f"Skipped {name}: {reason}")
         self._log(summary)
 
-    # ---------------------------------------------------------- results UI
+    #---------------------------------------------------------- results display
     def _populate_table(self):
         self.results_table.setRowCount(0)
         for row_dict in self.mask_result.rows:
@@ -251,6 +244,8 @@ class MaskStagePage(QWidget):
             for row in self.mask_result.rows:
                 writer.writerow(row)
 
-    # -------------------------------------------------------------- nav
+    #------------------------------------------------------------
     def on_continue(self):
         self.finished.emit()
+
+

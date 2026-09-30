@@ -97,11 +97,11 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         return page
 
-    # ------------------------------------------------------------- logging
+    # ------------------------------------------------------------- log
     def _show_error(self, message):
         QMessageBox.critical(self, "SegMetric.Landmark — Error", message)
 
-    # --------------------------------------------------------- navigation
+    # ------------------------------------------------------- navigation
     def _update_nav_state(self, *_args):
         idx = self.stack.currentIndex()
         self.back_btn.setVisible(idx not in (PAGE_SETUP, PAGE_REVIEW))
@@ -124,7 +124,7 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentIndex(PAGE_SETUP)
         self._update_nav_state()
 
-    # ----------------------------------------------------------- matching
+    # -------------------------------------------------- matching data 
     def _begin_matching(self):
         try:
             matched, unmatched, no_mask = match_crops(
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
         self.matched_crops = matched
 
         if not matched:
-            self._show_error("No crops matched a scale row -- nothing to process.")
+            self._show_error("No image names matched the scale document -- nothing to process.")
             return False
 
         if unmatched:
@@ -161,15 +161,14 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(
                 self,
                 "SegMetric.Landmark",
-                f"{len(unmatched)} crop(s) had no matching scale row and will "
+                f"{len(unmatched)} crop(s) had no matching scale and will "
                 f"be excluded:\n{preview}{more}",
             )
         if no_mask:
             QMessageBox.warning(
                 self,
                 "SegMetric.Landmark",
-                f"{len(no_mask)} matched crop(s) have no usable mask -- "
-                "no dimming reference will be shown for those.",
+                f"{len(no_mask)} matched crop(s) have no usable mask.",
             )
         return True
 

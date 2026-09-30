@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "segmetric"
 version = "0.1.0"
-description = "SegMetric: tools for segmenting, cropping, and measuring scanned insect wing/leg panels. Includes segmetric.tag (segment/crop/name), segmetric.set (filename preset builder), segmetric.scale (ArUco scale + crop), and segmetric.prepare (combined tag+set+scale workflow)."
+description = "SegMetric: tools for segmenting, cropping, and measuring. Includes segmetric.tag (crop + name), segmetric.set (filename preset builder), segmetric.scale (ArUco scale + crop), and segmetric.prepare (combined tag+set+scale workflow)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

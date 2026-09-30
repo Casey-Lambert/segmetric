@@ -1,3 +1,5 @@
+
+
 import os
 
 from PyQt6.QtCore import Qt
@@ -43,14 +45,14 @@ class MainWindow(QMainWindow):
 
         self.input_folder = None
         self.sample_file = None
-        self.segments = []  # list[Segment], live-edited
-        self.object_id_row_index = None  # Segment.index of the flagged row, or None
-        self._object_id_radios = {}  # {Segment.index: QRadioButton}, for manual exclusivity
+        self.segments = []  # list[Segment], live 
+        self.object_id_row_index = None  # Segment.index of the flagged row
+        self._object_id_radios = {}  # {Segment.index: QRadioButton} (manual)
 
         self._build_ui()
         self._update_button_states()
 
-    # ------------------------------------------------------------------ UI
+    # ------------------------------------------------------------------GUI
     def _build_ui(self):
         central = QWidget()
         layout = QVBoxLayout(central)
@@ -191,13 +193,13 @@ class MainWindow(QMainWindow):
         box.setText(message)
         box.exec()
 
-    # -------------------------------------------------------------- state
+    # -------------------------------------------------------
     def _update_button_states(self):
         ready = bool(self.segments)
         self.save_btn.setEnabled(ready)
         self.load_btn.setEnabled(ready)
 
-    # -------------------------------------------------------- sample mode
+    # -------------------------------------------------------- sample
     def on_sample_mode_changed(self, _checked):
         manual = self.manual_mode_radio.isChecked()
         self.browse_form.setVisible(not manual)
@@ -217,7 +219,7 @@ class MainWindow(QMainWindow):
         self._update_button_states()
         self._log(f"Sample: {source_label}")
 
-    # -------------------------------------------------------------- table
+    # -------------------------------------------------------------- viewing table
     def _rebuild_table(self):
         self.table.setRowCount(1 + len(self.segments))
         self._object_id_radios = {}
@@ -264,12 +266,6 @@ class MainWindow(QMainWindow):
         self.table.resizeColumnToContents(3)
 
     def on_object_id_toggled(self, segment_index, checked):
-        """Radios aren't in an exclusive QButtonGroup (see setAutoExclusive
-        above) specifically so the object id flag can be optional -- clicking
-        the currently-flagged radio clears it back to "none set" instead of
-        being stuck permanently checked. Exclusivity across rows (at most one
-        flagged) is enforced here by hand instead.
-        """
         if checked:
             self.object_id_row_index = segment_index
             for other_index, other_radio in self._object_id_radios.items():
@@ -280,7 +276,7 @@ class MainWindow(QMainWindow):
         elif self.object_id_row_index == segment_index:
             self.object_id_row_index = None
 
-    # -------------------------------------------------------- folder pick
+    # --------------------------------------------------------select folder to use 
     def on_browse_input(self):
         folder = QFileDialog.getExistingDirectory(self, "Select input folder")
         if not folder:
@@ -297,7 +293,7 @@ class MainWindow(QMainWindow):
         self._log(f"Found {len(files)} file(s) in {folder}.")
         self._set_segments_from_text(files[0], os.path.basename(files[0]))
 
-    # ------------------------------------------------------- manual entry
+    # --------------------------------------------- manual entry 
     def on_manual_filename_changed(self):
         text = self.manual_name_edit.text().strip()
         if not text:
@@ -305,7 +301,7 @@ class MainWindow(QMainWindow):
         self.input_folder = None
         self._set_segments_from_text(text, text)
 
-    # ------------------------------------------------------------ presets
+    # ---------------------------------------------------------presets
     def on_save_preset(self):
         if not self.segments:
             self._show_error(
@@ -355,6 +351,7 @@ class MainWindow(QMainWindow):
             )
             return
 
+
         path, _ = QFileDialog.getOpenFileName(
             self, "Load preset", "", "JSON files (*.json)"
         )
@@ -385,3 +382,7 @@ class MainWindow(QMainWindow):
         self._log(f"Preset loaded from {path}")
         for warning in warnings:
             self._log(f"  Note: {warning}")
+
+
+
+

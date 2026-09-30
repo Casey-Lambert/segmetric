@@ -1,17 +1,17 @@
+
 import math
 
 
 def centroid_size(points_mm):
-    """Root-sum-of-squared deviations from the centroid -- the standard
-    geometric-morphometrics "size" measure for a landmark configuration.
-    Direct port of the reference notebook's centroid_size(). Meaningless
-    for fewer than 2 points; callers should guard that themselves (see
-    landmark_row_fields below, which does).
+    """Root-sum-of-squared deviations from centroid. centroid_size(). Not used 
+    for fewer than 2 points detected.
     """
     n = len(points_mm)
     cx = sum(p[0] for p in points_mm) / n
     cy = sum(p[1] for p in points_mm) / n
     return math.sqrt(sum((x - cx) ** 2 + (y - cy) ** 2 for x, y in points_mm))
+
+
 
 
 def landmark_field_names(label):
@@ -20,10 +20,9 @@ def landmark_field_names(label):
 
 def landmark_row_fields(points_px, labels, mm_per_pixel):
     """points_px: dict[label -> (x, y) | absent-if-unplaced]. Returns a
-    dict with "{label}_x_px/_y_px/_x_mm/_y_mm" for every *placed* label
-    (unplaced labels are simply omitted -- the caller's CSV writer fills
-    the gap with ""), plus "n_landmarks" (placed count) and
-    "centroid_size_mm" (0.0 if fewer than 2 points are placed).
+    dict with "{label}_x_px/_y_px/_x_mm/_y_mm" for every label detected, "" for missing info in CSV
+    "n_landmarks" for number of landmarks the user placed on the image
+    "centroid_size_mm" defults to 0.0 if fewer than 2 points are placed and centriod cannot be calculated
     """
     fields = {}
     placed_mm = []
@@ -44,3 +43,5 @@ def landmark_row_fields(points_px, labels, mm_per_pixel):
     fields["n_landmarks"] = n_placed
     fields["centroid_size_mm"] = round(centroid_size(placed_mm), 4) if n_placed >= 2 else 0.0
     return fields
+
+

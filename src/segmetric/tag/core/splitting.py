@@ -9,11 +9,7 @@ RENDER_DPI = 1200
 
 
 def load_first_page(file_path, dpi=RENDER_DPI):
-    """Load a file's first page/frame as a BGR numpy array (OpenCV convention).
-
-    PDFs are rendered with PyMuPDF at `dpi`; PNG/JPG files are read directly.
-    Raises SegMetricError with a researcher-readable message on failure.
-    """
+    """Load a file preview"""
     fname = os.path.basename(file_path)
 
     if file_path.lower().endswith(".pdf"):
@@ -56,15 +52,9 @@ def load_first_page(file_path, dpi=RENDER_DPI):
     return image
 
 
+#-------------------------------------------------------------- split
 def split_into_grid(image, rows, cols):
     """Split `image` into a rows x cols grid, row-major, edge-inclusive.
-
-    Matches the notebook's original 4x4 split logic generalized to any grid
-    size: each panel is H//rows (W//cols) tall/wide, except the last row/column
-    of each which absorbs the remainder so the whole image is covered.
-
-    Returns a list of dicts (in row-major order: row 0 all cols, then row 1, ...)
-    with keys: index (1-based), row, col, panel (numpy array), bbox (x1, y1, x2, y2).
     """
     if rows < 1 or cols < 1:
         raise SegMetricError("Rows and columns must both be at least 1.")

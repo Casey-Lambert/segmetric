@@ -1,5 +1,5 @@
-import math
 
+import math
 import numpy as np
 from PyQt6.QtCore import QRect, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap
@@ -27,13 +27,7 @@ def _bgr_to_qpixmap(image_bgr):
 
 
 class _ZoomPanMixin:
-    """Cursor-centered scroll-wheel zoom + Space+drag pan, shared geometry
-    math -- the same mechanics ported (independently, matching this
-    codebase's established per-tool-canvas pattern) into
-    segmetric.mask/segment/landmark's canvases. Subclasses provide
-    self.image_bgr and call _init_zoom_pan()/_recompute_geometry() the
-    same way those do.
-    """
+   
 
     def _init_zoom_pan(self):
         self.zoom = MIN_ZOOM
@@ -207,11 +201,6 @@ class _ZoomPanMixin:
 
 
 class _TwoPointCanvas(_ZoomPanMixin, QWidget):
-    """ImageJ-style "set scale" canvas: click once to place point A, click
-    again to place point B (drawing a line between them); clicking near an
-    existing point selects and drags it instead of adding a third. Supports
-    the same zoom/pan as every other canvas in this suite.
-    """
 
     points_changed = pyqtSignal()
     zoom_changed = pyqtSignal(float)
@@ -219,7 +208,7 @@ class _TwoPointCanvas(_ZoomPanMixin, QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.image_bgr = None
-        self.points = []  # 0, 1, or 2 (ix, iy) tuples
+        self.points = []  # 0, 1, or 2 (ix, iy)
         self._dragging_index = None
         self._init_zoom_pan()
         self.setMinimumSize(420, 320)
@@ -295,7 +284,7 @@ class _TwoPointCanvas(_ZoomPanMixin, QWidget):
             return
 
         if len(self.points) >= 2:
-            self.points = []  # a third click starts over
+            self.points = []  # a third click starts over the click sequence
         self.points.append(pt)
         self.points_changed.emit()
         self.update()
@@ -316,13 +305,8 @@ class _TwoPointCanvas(_ZoomPanMixin, QWidget):
             return
         self._dragging_index = None
 
-
+##Selective croping 
 class _RectCanvas(_ZoomPanMixin, QWidget):
-    """Click-drag rectangle canvas for setting a manual crop region.
-    Press defines one corner, dragging previews the box live, release sets
-    the other corner. Doing it again redefines the box. Same zoom/pan as
-    every other canvas in this suite.
-    """
 
     bbox_changed = pyqtSignal()
     zoom_changed = pyqtSignal(float)
@@ -400,3 +384,5 @@ class _RectCanvas(_ZoomPanMixin, QWidget):
         if self._drag_start is not None:
             self._drag_start = None
             self.bbox_changed.emit()
+
+

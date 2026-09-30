@@ -1,5 +1,7 @@
+
 import csv
 import os
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -7,10 +9,10 @@ from segmetric.errors import SegMetricError
 from segmetric.mask.core.tagging import find_tagged_mask
 from segmetric.tag.core.discovery import find_input_files
 
-# segmetric.scale's pipeline saves crops as "<original_stem>_cropped.<ext>".
-CROPPED_SUFFIX = "_cropped"
-BLANK_TAG = "blank"
+#------------------------------------------------------
 
+CROPPED_SUFFIX = "_cropped" #  "<original_stem>_cropped.<ext>".
+BLANK_TAG = "blank"
 
 @dataclass
 class MatchedItem:
@@ -34,10 +36,8 @@ def _load_scale_rows_by_stem(scale_csv_path):
             fieldnames = reader.fieldnames or []
             if "file_name" not in fieldnames or "mm_per_pixel" not in fieldnames:
                 raise SegMetricError(
-                    f"'{scale_csv_path}' doesn't look like a scale CSV -- expected "
-                    "at least 'file_name' and 'mm_per_pixel' columns (accepts "
-                    "either segmetric.scale's scales.csv or segmetric.prepare's "
-                    "summary.csv as-is)."
+                    f"'{scale_csv_path}' not a scale.csv"
+                    "(accepts segmetric.scale's scales.csv or segmetric.prepare's summary.csv as-is)."
                 )
             rows = list(reader)
     except OSError as exc:
@@ -49,26 +49,6 @@ def _load_scale_rows_by_stem(scale_csv_path):
 
 
 def match_crops(crops_dir, scale_csv_path, masks_dir=None, exclude_blank_tagged=True):
-    """Discover crop images (via tag's find_input_files) and join each to
-    its mm_per_pixel from scale_csv_path (segmetric.scale's scales.csv or
-    segmetric.prepare's summary.csv, both accepted as-is via the shared
-    file_name/mm_per_pixel columns) and, if masks_dir is given, its
-    segmetric.mask output mask (any tag, via find_tagged_mask).
-
-    A crop whose only matching mask is tagged "blank" is dropped from the
-    batch entirely when exclude_blank_tagged is True (the default) -- a
-    blank specimen has nothing to measure. A "_damage" tag or any custom
-    tag is used as-is (a damaged wing may still be partly measurable).
-
-    Returns (matched, unmatched_names, no_mask_names):
-    - matched: list[MatchedItem] -- mask_path is None for any crop with no
-      usable mask; the caller falls back to segmenting the whole image
-      (segment_cells' own "no wing mask" behavior) with a warning.
-    - unmatched_names: crop basenames with no scale row at all (excluded
-      from matched).
-    - no_mask_names: matched crop basenames that had no usable mask --
-      only ever populated when masks_dir was given.
-    """
     crop_paths = find_input_files(crops_dir)
     scale_by_stem = _load_scale_rows_by_stem(scale_csv_path)
 
@@ -94,7 +74,7 @@ def match_crops(crops_dir, scale_csv_path, masks_dir=None, exclude_blank_tagged=
         if masks_dir:
             mask_path, mask_tag = find_tagged_mask(masks_dir, original_stem)
             if mask_path is not None and mask_tag == BLANK_TAG and exclude_blank_tagged:
-                continue  # dropped entirely -- not even counted as "no mask"
+                continue  
             if mask_path is None:
                 no_mask_names.append(os.path.basename(crop_path))
 
@@ -110,3 +90,7 @@ def match_crops(crops_dir, scale_csv_path, masks_dir=None, exclude_blank_tagged=
         )
 
     return matched, unmatched_names, no_mask_names
+
+
+
+

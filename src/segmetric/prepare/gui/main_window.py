@@ -1,3 +1,4 @@
+
 import os
 
 from PyQt6.QtCore import Qt
@@ -36,6 +37,8 @@ from ..core.metadata import preset_column_order
 from .preview import load_preview_page, render_grid_preview
 from .worker import PrepareJobWorker
 
+
+###________________________
 MIN_GRID = 1
 MAX_GRID = 8
 DEFAULT_GRID = 4
@@ -52,7 +55,7 @@ class MainWindow(QMainWindow):
         self.output_folder = None
         self.first_input_file = None
         self.preview_page_bgr = None
-        self.loaded_preset = None  # segmetric.set Preset, optional
+        self.loaded_preset = None  # segmetric.set Preset data is optional
 
         self.prepare_worker = None
 
@@ -72,7 +75,7 @@ class MainWindow(QMainWindow):
         content = QWidget()
         layout = QVBoxLayout(content)
 
-        # -- folders --
+        # --  folders  ---
         folders_group = QGroupBox("Folders")
         folders_layout = QFormLayout(folders_group)
 
@@ -103,14 +106,14 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(folders_group)
 
-        # -- tabs --
+        # -- tabs  --
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_panels_tab(), "Panels")
         self.tabs.addTab(self._build_metadata_tab(), "Metadata")
         self.tabs.addTab(self._build_scale_tab(), "Scale")
         layout.addWidget(self.tabs)
 
-        # -- run --
+        # --  run --
         self.run_btn = QPushButton("Run")
         self.run_btn.setMinimumHeight(36)
         self.run_btn.clicked.connect(self.on_run)
@@ -143,7 +146,7 @@ class MainWindow(QMainWindow):
         scroll_area.setWidget(widget)
         return scroll_area
 
-    # --------------------------------------------------------- Panels tab
+    #---------------------------------------------- panels
     def _build_panels_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
@@ -309,7 +312,7 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         return self._scrollable(tab)
 
-    # ----------------------------------------------------------- Scale tab
+    ####------------------------------------------------------scale
     def _build_scale_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
@@ -503,7 +506,7 @@ class MainWindow(QMainWindow):
         wrapper_layout.addWidget(self.blob_advanced_group)
         return wrapper
 
-    # -------------------------------------------------------------- preview
+    # ----------------------------------------------------------preview
     def _build_preview(self):
         panel = QWidget()
         layout = QVBoxLayout(panel)
@@ -521,7 +524,7 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         self._update_preview()
 
-    # ------------------------------------------------------------- logging
+    # --------------------------------------------------------------logging
     def _log(self, message):
         self.log_view.appendPlainText(message)
 
@@ -534,7 +537,7 @@ class MainWindow(QMainWindow):
             box.setDetailedText(details)
         box.exec()
 
-    # -------------------------------------------------------------- state
+    ###------------------------------------------------
     def _current_ocr_region(self):
         return OcrRegion(
             v_anchor="top" if self.v_top_radio.isChecked() else "bottom",
@@ -685,7 +688,7 @@ class MainWindow(QMainWindow):
         self.output_line.setText(folder)
         self._update_run_button_state()
 
-    # ------------------------------------------------------------- preview
+    ###-------------------------------------------------------preview
     def _update_preview(self):
         if self.preview_page_bgr is None:
             return
@@ -723,7 +726,7 @@ class MainWindow(QMainWindow):
     def on_scale_settings_changed(self):
         pass
 
-    # ---------------------------------------------------- metadata preset
+    #------------------------------------------------metadata
     def _update_metadata_warning(self):
         show = self.loaded_preset is not None and not self.cv_checkbox.isChecked()
         self.metadata_warning_label.setVisible(show)
@@ -756,7 +759,7 @@ class MainWindow(QMainWindow):
         )
         self._update_metadata_warning()
 
-    # -------------------------------------------------------- scale preset
+    ##------------------------------------------------------scale
     def on_save_scale_preset(self):
         path, _ = QFileDialog.getSaveFileName(
             self, "Save scale preset", "scale_preset.json", "JSON files (*.json)"
@@ -791,7 +794,7 @@ class MainWindow(QMainWindow):
         self._update_preview()
         self._log(f"Scale preset loaded from {path}")
 
-    # ------------------------------------------------------------------ run
+    ##--------------------------------------------------------------
     def on_run(self):
         self._set_controls_enabled(False)
         self.stop_btn.setEnabled(True)

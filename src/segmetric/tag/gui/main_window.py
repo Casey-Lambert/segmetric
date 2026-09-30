@@ -1,3 +1,4 @@
+
 import os
 
 from PyQt6.QtCore import Qt
@@ -49,7 +50,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._update_run_button_state()
 
-    # ------------------------------------------------------------------ UI
+    #--------------------------------------------------------------GUI
     def _build_ui(self):
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
@@ -64,7 +65,7 @@ class MainWindow(QMainWindow):
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
-        # -- folders --
+        # -- folders  --
         folders_group = QGroupBox("Folders")
         folders_layout = QFormLayout(folders_group)
 
@@ -106,7 +107,7 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(folders_group)
 
-        # -- grid params --
+        # -- grid param--
         grid_group = QGroupBox("Grid")
         grid_layout = QFormLayout(grid_group)
 
@@ -124,7 +125,7 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(grid_group)
 
-        # -- naming --
+        # -- name --
         naming_group = QGroupBox("Naming")
         naming_layout = QVBoxLayout(naming_group)
 
@@ -137,7 +138,7 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(naming_group)
 
-        # -- run --
+        # --run --
         self.run_btn = QPushButton("Run")
         self.run_btn.setMinimumHeight(36)
         self.run_btn.clicked.connect(self.on_run)
@@ -254,7 +255,7 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         self._update_grid_preview()
 
-    # ------------------------------------------------------------- logging
+    # -----------------------------------------------------------logging
     def _log(self, message):
         self.log_view.appendPlainText(message)
 
@@ -267,7 +268,7 @@ class MainWindow(QMainWindow):
             box.setDetailedText(details)
         box.exec()
 
-    # -------------------------------------------------------------- state
+    # --------------------------------------------------------------  state
     def _update_run_button_state(self):
         self.run_btn.setEnabled(self._is_ready())
 
@@ -303,7 +304,7 @@ class MainWindow(QMainWindow):
             return "jpeg"
         return "tiff"
 
-    # -------------------------------------------------------- folder pick
+    # ------------------------------------------------ select folder
     def on_browse_input(self):
         folder = QFileDialog.getExistingDirectory(self, "Select input folder")
         if not folder:
@@ -370,7 +371,7 @@ class MainWindow(QMainWindow):
     def on_ocr_region_changed(self):
         self._update_grid_preview()
 
-    # ------------------------------------------------------------------ run
+    ##------------------------------------------------------------------ run
     def on_run(self):
         self._set_controls_enabled(False)
         self.stop_btn.setEnabled(True)

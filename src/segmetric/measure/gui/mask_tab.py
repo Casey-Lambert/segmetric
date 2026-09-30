@@ -1,10 +1,5 @@
-"""The Mask tab of segmetric-measure: just Mask's tool-specific settings
-(single-filter vs. mixed-by-object-id, and the filter(s) themselves).
-Scales file / Crops folder / Output folder / Metadata preset all live once
-on the shared MainWindow instead of being repeated per tab -- see
-segmetric.mask.gui.setup_window.SetupPage for the standalone tool's own,
-untouched version of this page (which does bundle those fields).
-"""
+"""Mask tool specific setting details """
+
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -24,6 +19,7 @@ from segmetric.prepare.core.metadata import apply_preset_to_filename
 BATCH_SINGLE = "single"
 BATCH_MIXED = "mixed"
 
+#--------------------------------------------
 
 class MaskTab(QWidget):
     def __init__(self, parent=None):
@@ -73,13 +69,7 @@ class MaskTab(QWidget):
     # ----------------------------------------------------- object-id assignment
     def refresh_object_id_assignment(self, scales_file, crops_folder, metadata_preset):
         """Reactively re-populate the Mixed-mode ObjectIdAssignmentWidget's
-        discovered ids whenever shared Folders/Metadata state changes --
-        previously this only happened once Run was clicked (matching how
-        segmetric-mask's own standalone MainWindow does it), which left the
-        widget showing "No crops matched yet." while typing groups in
-        ahead of time. Safe to call repeatedly: set_discovered_object_ids
-        only refreshes the discovered-id list/coverage check, never the
-        user's own typed groups.
+        discovered ids whenever folders or metadata state changes
         """
         preset_has_object_id = metadata_preset is not None and metadata_preset.object_id_column is not None
         if not (scales_file and crops_folder and preset_has_object_id):
@@ -98,3 +88,4 @@ class MaskTab(QWidget):
             if object_id:
                 counts[object_id] = counts.get(object_id, 0) + 1
         self.object_id_widget.set_discovered_object_ids(counts)
+

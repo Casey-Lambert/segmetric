@@ -1,3 +1,4 @@
+
 import cv2
 
 ADD = "add"
@@ -5,18 +6,8 @@ REMOVE = "remove"
 
 
 def apply_brush_stroke(mask, x0, y0, x1, y1, radius, mode=ADD):
-    """Paint a brush stroke onto mask (uint8, values 0/1) and return the
-    result as a new array (the input is left unmodified).
-
-    Matches the notebook's WingMaskEditor._paint exactly: draws a thick line
-    (2*radius wide) from (x0, y0) to (x1, y1), plus a filled circle of
-    `radius` at the endpoint -- the circle alone covers the very first point
-    of a stroke, where there's no previous point to draw a line from yet
-    (pass x0=y0=None for that case). mode=ADD paints 1s in; mode=REMOVE
-    paints 0s (erases).
-
-    (x1, y1) outside the mask is a no-op (returns an unchanged copy);
-    (x0, y0) outside the mask is fine -- cv2.line clips to the image bounds.
+    """Add/Remove brush stroke mask editor(uint8, values 0/1); return the
+    result as a new arrays.
     """
     result = mask.copy()
     h, w = result.shape[:2]

@@ -1,3 +1,4 @@
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QButtonGroup,
@@ -186,3 +187,5 @@ class SetupPage(QWidget):
         self.preset_line.clear()
         self.preset_status_label.setText("No preset loaded.")
         self._emit_ready()
+
+

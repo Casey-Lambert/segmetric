@@ -1,3 +1,5 @@
+#main window 
+
 import csv
 import os
 
@@ -44,6 +46,7 @@ PAGE_RESULTS = 3
 TABLE_COLUMNS = ["", "File", "Length (mm)", "Width (mm)", "Status", "Tag", ""]
 
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -60,7 +63,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._update_nav_state()
 
-    # ------------------------------------------------------------------ UI
+    # -------------------------------------------------------------------- GUI
     def _build_ui(self):
         central = QWidget()
         outer = QVBoxLayout(central)
@@ -141,14 +144,14 @@ class MainWindow(QMainWindow):
 
         return page
 
-    # ------------------------------------------------------------- logging
+    # ----------------------------------------------------------- logging
     def _log(self, message):
         self.log_view.appendPlainText(message)
 
     def _show_error(self, message):
         QMessageBox.critical(self, "SegMetric.Mask — Error", message)
 
-    # --------------------------------------------------------- navigation
+    ##--------------------------------------------------------- nav
     def _update_nav_state(self, *_args):
         idx = self.stack.currentIndex()
         self.back_btn.setVisible(idx != PAGE_SETUP)
@@ -183,7 +186,8 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentIndex(PAGE_SETUP)
         self._update_nav_state()
 
-    # ----------------------------------------------------------- matching
+   
+   ##----------------------------------------------------------- matching
     def _begin_matching(self):
         try:
             matched, unmatched = match_crops_to_scale_rows(
@@ -222,7 +226,7 @@ class MainWindow(QMainWindow):
                 counts[object_id] = counts.get(object_id, 0) + 1
         self.object_id_widget.set_discovered_object_ids(counts)
 
-    # -------------------------------------------------------------- run
+    ##------------------------------------------------------- run
     def on_browse_output(self):
         folder = QFileDialog.getExistingDirectory(self, "Select output folder")
         if not folder:
@@ -289,7 +293,6 @@ class MainWindow(QMainWindow):
         self._log(summary)
         QMessageBox.information(self, "SegMetric.Mask — Run complete", summary)
 
-    # ---------------------------------------------------------- results UI
     def _populate_table(self):
         self.results_table.setRowCount(0)
         for row_dict in self.mask_result.rows:
@@ -357,11 +360,9 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def save_corrected_row(self, row_idx, crop, mask, measurement, tag):
-        """Persist one object's corrected mask + measurement + tag: renames
-        the mask PNG if the tag changed (never touches the original crop
-        image), rewrites it, updates the row/table/CSV. Called by both
+        """renames mask PNG if the tag changed. Later this is called by both
         CorrectionDialog (single-file Edit) and ReviewDialog (click-through)
-        via this shared path, so both stay consistent.
+        via to keep them consistent.
         """
         row_dict = self.mask_result.rows[row_idx]
         old_tag = row_dict.get("tag", "")
@@ -384,3 +385,5 @@ class MainWindow(QMainWindow):
             writer.writeheader()
             for row in self.mask_result.rows:
                 writer.writerow(row)
+
+

@@ -1,8 +1,10 @@
+
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from ..core.errors import SegMetricError
 from ..core.naming import DEFAULT_OUTPUT_FORMAT, OcrRegion
 from ..core.pipeline import run_panel_split_job
+
 
 
 class SplitJobWorker(QThread):
@@ -33,6 +35,7 @@ class SplitJobWorker(QThread):
         self.gpu = gpu
         self.output_format = output_format
 
+
     def run(self):
         try:
             result = run_panel_split_job(
@@ -55,3 +58,7 @@ class SplitJobWorker(QThread):
                 "An unexpected error occurred. See segmetric_tag.log in the output "
                 "folder for details."
             )
+
+
+
+

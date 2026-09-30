@@ -1,18 +1,18 @@
+
 import cv2
 import numpy as np
 
 from .model import FilterSettings
 
-# Fourier smoothing only kicks in above this many contour points -- matches
-# the notebook's fallback (use the raw contour when it's too small to
-# meaningfully smooth).
-MIN_CONTOUR_POINTS_FOR_SMOOTHING = 200
+# Fourier smoothing only kicks in above set number of contour points (see line below)
+
+MIN_CONTOUR_POINTS_FOR_SMOOTHING = 200 #<-can change number of contor points
 
 
 def _smooth_contour_fourier(contour, keep_freq):
-    """Low-pass filter a contour's (x, y) coordinates via FFT, keeping only
-    the lowest keep_freq fraction of frequencies (min 10 components).
-    Matches the notebook's smooth_contour_fourier exactly.
+    """Low-pass contour filter (x, y) coordinates with FFT, keeping only
+    the lowest keep_freq fraction of frequencies (minumum of 10 components).
+    .
     """
     pts = contour[:, 0, :].astype(np.float32)
     pts_complex = pts[:, 0] + 1j * pts[:, 1]
@@ -30,14 +30,12 @@ def _smooth_contour_fourier(contour, keep_freq):
 
 def generate_mask(image_bgr, filter_settings: FilterSettings):
     """Generate a binary object mask from image_bgr using filter_settings'
-    7 parameters. Direct port of the notebook's WING_PARAMS-driven masking
-    cell: LAB chroma + inverted-L "signal" -> two-pass Otsu threshold (a
-    first rough pass locates the blob, a second pass darkens veins inside
-    it) -> largest component above min_blob -> morphological close ->
-    flood-fill interior holes -> Fourier-smoothed outer contour.
+    parameters (7). 
+    First pass; flow to locate the blob in the image: LAB chroma + inverted-L "signal" -> two-pass Otsu threshold 
+    Second pass; largest blob component above min_blob size -> morph kernal close ->
+    flood-fill -> smoothed outer contour.
 
-    Returns a uint8 mask (values 0/1), the same shape as image_bgr's first
-    two dimensions.
+    Returns a uint8 mask (values 0/1), the same shape as image_bgr's.
     """
     p = filter_settings
     img_lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)

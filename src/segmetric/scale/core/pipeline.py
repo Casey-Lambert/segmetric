@@ -31,7 +31,7 @@ SCALE_SOURCE_MANUAL_BATCH = "manual_batch"
 @dataclass
 class ScaleJobResult:
     output_dir: str
-    files_processed: list = field(default_factory=list)  # successfully cropped
+    files_processed: list = field(default_factory=list)  #  cropped
     files_skipped: list = field(default_factory=list)  # (file_name, reason)
     scale_rows: list = field(default_factory=list)  # (file_name, mm_per_pixel, scale_source)
     panels_cropped: int = 0
@@ -77,21 +77,8 @@ def _write_csv(scale_dir, scale_rows):
 
 def _apply_median_fallback(readable_files, valid_scales, failed_names, scale_by_name, group_size, report):
     """Fill scale_by_name for every name in failed_names, then return the
-    (file_name, mm_per_pixel, scale_source) rows for every readable file, in
-    order.
-
-    group_size=None (or < 1): one flat median across the whole batch --
-    the notebook's original, unchanged behavior.
-
-    group_size=N: readable_files is chunked into consecutive blocks of N
-    (matching how a caller like segmetric.prepare numbers panels
-    sequentially per source page: N = rows * cols). Each failed image is
-    backfilled with its OWN group's median instead of the whole batch's. A
-    group with zero valid measurements of its own falls back to the
-    whole-batch median as a last resort -- flagged 'batch_median', same
-    label as the ungrouped case; a normal per-page fallback is flagged
-    'page_median' so the two are distinguishable in the CSV.
-    """
+    (file_name, mm_per_pixel, scale_source) rows for every file, in
+    sequence."""
     failed_set = set(failed_names)
 
     if not group_size or group_size < 1:
@@ -112,7 +99,7 @@ def _apply_median_fallback(readable_files, valid_scales, failed_names, scale_by_
             for file_name, _ in readable_files
         ]
 
-    # Grouped (per-page) fallback.
+    # Grouped fallback.
     whole_batch_median = float(np.median(valid_scales))
     source_by_name = {}
     n_groups = 0
@@ -160,44 +147,7 @@ def run_scale_job(
     group_size=None,
     output_format=DEFAULT_OUTPUT_FORMAT,
 ):
-    """Two-pass ArUco scale + crop batch job, matching the notebook's Cell 9
-    -- preceded by the notebook's Cell 7 preparation step (see
-    preparation.prepare_image): each image is first cropped tight to its
-    markers and upscaled 2x before either pass runs, so the measured scale
-    and the saved cropped image are both calibrated to that same pixel
-    space, matching how the notebook's Cell 9 actually operated on Cell 7's
-    output (Prepared_Crops) rather than on raw split panels. Images with
-    fewer than 3 markers can't be prepared at all and are skipped entirely
-    (no scale, no crop) -- flagged in files_skipped.
 
-    Pass 1 -- for each preparable image, detect markers and compute mm/pixel
-    (needs >=4 markers). Images that don't have enough markers are
-    backfilled with a median of other successfully-measured images and
-    flagged accordingly in the CSV (vs. 'measured'), so the fallback is
-    visible instead of silent:
-
-    - group_size=None (default): one median across the *whole batch* --
-      exactly the notebook's original fallback -- flagged 'batch_median'.
-      This is what standalone segmetric-scale always uses.
-    - group_size=N: the batch is chunked into consecutive groups of N
-      images (e.g. N = rows * cols for panels split from same-sized source
-      pages, as segmetric.prepare uses), and each failed image is
-      backfilled from its *own group's* median instead -- flagged
-      'page_median'. If a whole group has no valid measurements of its
-      own, it falls back to the whole-batch median as a last resort,
-      still flagged 'batch_median' for that image.
-
-    Pass 2 -- for each prepared image, detect markers again (looser
-    requirement: >=2) and crop to the marker bounding box, saving the
-    result to <output_folder>/scale/ as output_format (tiff/png/jpeg,
-    default tiff -- matching segmetric.tag's panel output).
-
-    should_stop, if given, is checked between files in both passes.
-    Stopping during pass 1 skips pass 2 entirely (there's no complete scale
-    picture yet to crop against) and writes a CSV of whatever was computed
-    so far. Stopping during pass 2 still writes the CSV for every file
-    (pass 1 always finishes first) but crops fewer images.
-    """
     input_files = find_input_files(input_folder)
     scale_dir = _make_output_dir(output_folder)
     logger = _make_logger(scale_dir)
@@ -216,11 +166,11 @@ def run_scale_job(
     total_files = len(input_files)
     report(0.0, f"Found {total_files} file(s) in {input_folder}.")
 
-    # ---------------------------------------------------------------- pass 1
+    # ---------------------------------------------------------------- first pass 
     valid_scales = []
     scale_by_name = {}
     failed_names = []
-    readable_files = []  # (file_name, file_path) read AND prepared successfully in pass 1
+    readable_files = []  # (file_name, file_path)
 
     for i, file_path in enumerate(input_files, start=1):
         file_name = os.path.basename(file_path)
@@ -281,13 +231,11 @@ def run_scale_job(
             report(0.5, "Stopped during scale detection — no scales computed yet.")
             return result
         raise SegMetricError(
-            "No image in this batch had enough ArUco markers to compute a "
-            "scale, so there's nothing to fall back to. Check the input "
-            "folder or the threshold settings."
+            "No image had enough ArUco markers to compute a "
+            "scale. Check the input folder or threshold settings."
         )
 
-    # Scale is now known for every readable file, measured or backfilled --
-    # build the CSV rows now so they're complete even if pass 2 stops early.
+    #safe gaurd to still build csv
     scale_rows = _apply_median_fallback(
         readable_files, valid_scales, failed_names, scale_by_name, group_size, report
     )
@@ -298,7 +246,9 @@ def run_scale_job(
         report(0.5, f"Stopped — scales for {len(scale_rows)} file(s) saved to {csv_path}.")
         return result
 
-    # ---------------------------------------------------------------- pass 2
+    # -------------------------------------------------------------- step 2 
+    
+    
     panels_cropped = 0
     total_readable = len(readable_files)
 
@@ -314,7 +264,7 @@ def run_scale_job(
 
         image = cv2.imread(file_path)
         if image is None:
-            continue  # already flagged as skipped in pass 1
+            continue  
 
         prepared = prepare_image(
             image,
@@ -326,7 +276,7 @@ def run_scale_job(
             blob_max_aspect=settings.blob_max_aspect,
         )
         if prepared is None:
-            continue  # pass 1 already verified this file prepares; defensive only
+            continue  
 
         cropped = crop_to_markers(
             prepared,
@@ -375,29 +325,7 @@ def run_manual_scale_job(
     should_stop=None,
     output_format=DEFAULT_OUTPUT_FORMAT,
 ):
-    """The no-marker counterpart to run_scale_job: scale and crop are
-    supplied by the caller (the GUI's manual "Set Scale"/"Set Crop Region"
-    dialogs) instead of detected, since there's nothing to detect.
-
-    scale_by_name: {file_name: mm_per_pixel} -- every readable file is
-    expected to have an entry (the GUI always fully populates this first,
-    whether by broadcasting one batch-wide value or via a completed
-    per-image review); a file missing here is skipped and flagged rather
-    than failing the whole batch, so this stays safe to call directly
-    (e.g. from a test) with a partial dict too.
-    scale_source_by_name: {file_name: SCALE_SOURCE_MANUAL |
-    SCALE_SOURCE_MANUAL_BATCH} -- recorded in the CSV's scale_source
-    column, same as the auto pipeline's measured/batch_median/page_median.
-    crop_bbox_by_name: None means the whole batch skips cropping -- every
-    image is saved at its original size. Otherwise {file_name: (x1, y1,
-    x2, y2)}; each file must have its own entry (clamped again here,
-    defensively, against that file's actual dimensions).
-
-    Saves <stem>_cropped.<ext> into <output_folder>/scale/ -- the exact
-    same subdirectory and filename convention run_scale_job uses, so
-    segmetric.mask/segment/landmark's matching code (which strips exactly
-    this "_cropped" suffix) picks it up with no changes on their end.
-    """
+   
     input_files = find_input_files(input_folder)
     scale_dir = _make_output_dir(output_folder)
 

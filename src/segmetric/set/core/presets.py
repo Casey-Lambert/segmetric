@@ -1,3 +1,4 @@
+
 import json
 
 from segmetric.errors import SegMetricError
@@ -53,11 +54,11 @@ def load_preset(path) -> Preset:
             data = json.load(f)
     except OSError as exc:
         raise SegMetricError(
-            f"Could not read the preset file '{path}': {exc.strerror}."
+            f"Could not read file '{path}': {exc.strerror}."
         ) from exc
     except json.JSONDecodeError as exc:
         raise SegMetricError(
-            f"'{path}' is not a valid preset file (invalid JSON)."
+            f"'{path}' is not a valid preset file (.JSON)."
         ) from exc
 
     try:
@@ -69,18 +70,7 @@ def load_preset(path) -> Preset:
 
 
 def apply_preset(current_segments, preset: Preset):
-    """Apply a loaded preset's column_name/include (matched by index) onto
-    current_segments -- segments freshly split from a live sample file, so
-    they carry real raw_value.
-
-    Returns (updated_segments, object_id_column, warnings):
-    - updated_segments: current_segments with column_name/include overwritten
-      wherever the preset has a matching index; segments the preset has no
-      entry for are left at their defaults.
-    - object_id_column: the preset's flagged column name, if a segment with
-      that column_name still exists after applying; otherwise None.
-    - warnings: human-readable strings describing any index mismatch between
-      the preset and the current sample file.
+    """Apply a loaded preset. Returns (updated_segments, object_id_column, warnings)
     """
     by_index = {segment.index: segment for segment in preset.segments}
     updated = []
@@ -101,14 +91,14 @@ def apply_preset(current_segments, preset: Preset):
             updated.append(segment)
             warnings.append(
                 f"Segment {segment.index + 1} ('{segment.raw_value}') has no "
-                "matching entry in the loaded preset -- left at its default."
+                "matching entry in the loaded preset - left at its default."
             )
 
     if by_index:
         extra = ", ".join(str(i + 1) for i in sorted(by_index))
         warnings.append(
             f"The loaded preset has extra segment(s) ({extra}) that don't "
-            "exist in the current sample file -- ignored."
+            "exist in the current sample file - ignored."
         )
 
     object_id_column = None
@@ -122,3 +112,11 @@ def apply_preset(current_segments, preset: Preset):
         )
 
     return updated, object_id_column, warnings
+
+
+
+
+
+
+
+

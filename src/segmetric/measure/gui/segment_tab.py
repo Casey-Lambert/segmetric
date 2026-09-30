@@ -1,13 +1,6 @@
-"""The Segment tab of segmetric-measure: Segment's tool-specific settings
-(optional masks folder, _blank exclusion, an object-id filter to narrow
-the batch, and single-preset vs. mixed-by-object-id preset assignment).
-Scales file / Crops folder / Output folder / Metadata preset all live once
-on the shared MainWindow -- see refresh_object_id_filter(), called by
-MainWindow whenever any of that shared state changes, mirroring
-segmetric.segment.gui.setup_window.SetupPage's own reactive
-_refresh_object_id_filter (untouched, still used standalone) but
-parameterized on shared state instead of reading self.scales_file etc.
+"""specific settings (tab)
 """
+
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -32,6 +25,13 @@ from segmetric.segment.gui.preset_editor import SegmentPresetEditorWidget
 
 BATCH_SINGLE = "single"
 BATCH_MIXED = "mixed"
+
+# Shown at startup and whenever Mask is not enabled for the run; defined once
+# so the two spots that set it can't drift apart.
+MASKS_HINT = (
+    "Optional -- segmetric.mask output, used to optimize detection. "
+    "If Mask is also enabled above, will automatically be filled in from output."
+)
 
 
 class SegmentTab(QWidget):
@@ -64,11 +64,7 @@ class SegmentTab(QWidget):
         masks_row.addWidget(self.masks_clear)
         inputs_layout.addRow("Masks folder:", masks_row)
 
-        self.masks_hint = QLabel(
-            "Optional -- segmetric.mask output, used to constrain detection "
-            "to the wing. If Mask is also enabled above, this is filled in "
-            "automatically from its output once you Run."
-        )
+        self.masks_hint = QLabel(MASKS_HINT)
         self.masks_hint.setStyleSheet("color: gray;")
         self.masks_hint.setWordWrap(True)
         inputs_layout.addRow("", self.masks_hint)
@@ -119,7 +115,7 @@ class SegmentTab(QWidget):
 
         self._on_enabled_changed(False)
 
-    # ------------------------------------------------------------- state
+    # --------------------------------------------------------- 
     def batch_type(self):
         return BATCH_MIXED if self.mixed_radio.isChecked() else BATCH_SINGLE
 
@@ -131,27 +127,19 @@ class SegmentTab(QWidget):
             w.setEnabled(checked)
 
     def set_masks_auto_chained(self, auto_chained):
-        """Cosmetic only -- the real source of truth for where masks are
-        read from is measure.core.pipeline.resolve_masks_dir at Run time,
-        called with the live enabled-state of the Mask tab. This just
-        keeps the masks-folder picker here from looking misleadingly
-        editable when Mask is enabled and will supply masks automatically.
-        """
+        """Cosmetic only """
+       
         self.masks_browse.setEnabled(not auto_chained and self.enabled_checkbox.isChecked())
         self.masks_clear.setEnabled(not auto_chained and self.enabled_checkbox.isChecked())
         if auto_chained:
             self.masks_hint.setText("Auto: using this run's Mask stage output.")
         else:
-            self.masks_hint.setText(
-                "Optional -- segmetric.mask output, used to constrain detection "
-                "to the wing. If Mask is also enabled above, this is filled in "
-                "automatically from its output once you Run."
-            )
+            self.masks_hint.setText(MASKS_HINT)
 
     def _on_local_inputs_changed(self, *_args):
         pass  # MainWindow re-triggers refresh_object_id_filter with shared state
 
-    # -------------------------------------------------------------- browse
+    # -------------------------------------------------------------- folder selection
     def on_browse_masks(self):
         folder = QFileDialog.getExistingDirectory(self, "Select masks folder")
         if not folder:
@@ -163,7 +151,7 @@ class SegmentTab(QWidget):
         self.masks_folder = None
         self.masks_line.clear()
 
-    # ----------------------------------------------------- object-id filter
+    ##----------------------------------------------------- object-id filter application
     def selected_object_ids(self):
         """None if there's no object-id filter active at all; otherwise
         the set of object ids currently checked.
@@ -211,16 +199,6 @@ class SegmentTab(QWidget):
         self._rebuild_object_ids_layout(counts)
 
     def refresh_object_id_assignment(self, scales_file, crops_folder, masks_dir, metadata_preset):
-        """Reactively re-populate the Mixed-mode ObjectIdAssignmentWidget's
-        (preset-routing, not the filter checklist above) discovered ids
-        whenever shared Folders/Metadata state changes -- previously this
-        only happened once Run was clicked, matching how segmetric-
-        segment's own standalone MainWindow does it. Counts respect the
-        current object-id filter selection, matching what Run will
-        actually pass through (see MainWindow._apply_object_id_filter).
-        Safe to call repeatedly -- never touches the user's own typed
-        groups, only the discovered-id list/coverage check.
-        """
         preset_has_object_id = metadata_preset is not None and metadata_preset.object_id_column is not None
         if not (scales_file and crops_folder and preset_has_object_id):
             self.object_id_widget.set_discovered_object_ids({})
@@ -232,7 +210,7 @@ class SegmentTab(QWidget):
                 exclude_blank_tagged=self.remove_blank_checkbox.isChecked(),
             )
         except SegMetricError:
-            return  # surfaced properly when Run is actually clicked
+            return  #
 
         selected = self.selected_object_ids()
         counts = {}
@@ -258,3 +236,5 @@ class SegmentTab(QWidget):
             cb.setChecked(True)
             self.object_ids_layout.addWidget(cb)
             self._object_id_checkboxes[object_id] = cb
+
+

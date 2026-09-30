@@ -1,3 +1,5 @@
+
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QButtonGroup,
@@ -27,10 +29,7 @@ BATCH_MIXED = "mixed"
 
 
 class SetupPage(QWidget):
-    """Required Scales file + Crops folder; optional Metadata preset,
-    Masks folder (recommended), and an object-id filter (once a preset with
-    an object-id column is loaded) that narrows the working set before
-    batch type / preset assignment -- independent of single vs. mixed.
+    """Required Scales file + Crops folder
     """
 
     ready_changed = pyqtSignal(bool)
@@ -182,7 +181,7 @@ class SetupPage(QWidget):
         scroll.setWidget(content)
         outer.addWidget(scroll)
 
-    # -------------------------------------------------------------- state
+    # ---------------------------------------------------------
     def batch_type(self):
         return BATCH_MIXED if self.mixed_radio.isChecked() else BATCH_SINGLE
 
@@ -214,7 +213,7 @@ class SetupPage(QWidget):
         self._refresh_object_id_filter()
         self._emit_ready()
 
-    # -------------------------------------------------------------- browse
+    #------------------------------------------------------------- file selection 
     def on_browse_scales(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select scales file", "", "CSV files (*.csv)")
         if not path:
@@ -271,7 +270,7 @@ class SetupPage(QWidget):
         self.preset_status_label.setText("No preset loaded.")
         self._on_inputs_changed()
 
-    # ----------------------------------------------------- object-id filter
+    #--------------------------------------------------- using preset 'object-id'
     def _refresh_object_id_filter(self):
         self.mask_warning_label.setText("")
         ready_for_scan = self.scales_file and self.crops_folder and self._preset_has_object_id()
@@ -306,10 +305,11 @@ class SetupPage(QWidget):
                 counts[object_id] = counts.get(object_id, 0) + 1
 
         if list(counts.keys()) == self._discovered_object_ids and self._object_id_checkboxes:
-            return  # unchanged -- keep the user's current checkbox choices
+            return  
 
         self._discovered_object_ids = sorted(counts)
         self._rebuild_object_ids_layout(counts)
+
 
     def _clear_object_ids_layout(self):
         while self.object_ids_layout.count():
@@ -326,3 +326,5 @@ class SetupPage(QWidget):
             cb.setChecked(True)
             self.object_ids_layout.addWidget(cb)
             self._object_id_checkboxes[object_id] = cb
+
+

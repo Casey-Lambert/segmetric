@@ -1,3 +1,4 @@
+
 import csv
 import os
 
@@ -10,18 +11,13 @@ SCALE_BASE_FIELDS = ["file_name", "mm_per_pixel", "scale_source"]
 
 
 def write_summary_csv(scale_csv_path, output_path, preset: Preset = None):
-    """Read scale's scales.csv and write output_path with the same rows,
-    plus preset's columns (applied to each row's file_name) if given.
-
-    With no preset, this is effectively a copy of scale_csv_path under
-    SCALE_BASE_FIELDS -- always one predictable summary file to check,
-    whether or not a preset was used.
-    """
+    """Read scales and write output_path """
     with open(scale_csv_path, newline="", encoding="utf-8") as f:
         scale_rows = list(csv.DictReader(f))
 
     extra_columns = preset_column_order(preset) if preset is not None else []
     fieldnames = SCALE_BASE_FIELDS + extra_columns
+
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -35,6 +31,7 @@ def write_summary_csv(scale_csv_path, output_path, preset: Preset = None):
             writer.writerow(out_row)
 
     return output_path
+
 
 
 def summary_path_for(output_folder):

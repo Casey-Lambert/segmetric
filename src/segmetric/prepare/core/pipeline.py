@@ -1,3 +1,4 @@
+
 import os
 from dataclasses import dataclass, field
 
@@ -20,7 +21,8 @@ class PrepareJobResult:
     tag_files_skipped: list = field(default_factory=list)
     scale_files_skipped: list = field(default_factory=list)
     interrupted: bool = False
-    interrupted_during: str = ""  # "tag" or "scale", only set if interrupted
+    interrupted_during: str = ""  # "tag" or "scale", only used if interrupted
+
 
 
 def run_prepare_job(
@@ -38,22 +40,9 @@ def run_prepare_job(
     should_stop=None,
     crop_output_format=DEFAULT_OUTPUT_FORMAT,
 ):
-    """Run segmetric.tag's split/name pipeline, then segmetric.scale's
-    detect/crop pipeline on that output, then merge the two into one
-    summary.csv (adding the loaded preset's columns, if any).
-
-    output_format controls the panels/ stage's saved file type;
-    crop_output_format independently controls the scale/ stage's cropped
-    file type -- both default to tiff.
-
-    Neither tag's nor scale's pipeline is modified -- this only calls them
-    as library functions and combines their results. Progress is mapped:
-    the tag stage reports into [0, 0.5], the scale stage into [0.5, 1.0].
-
-    Stopping during the tag stage skips the scale stage entirely (there's no
-    complete panel set yet to crop/scale against) and is reported as such.
-    Stopping during the scale stage still writes summary.csv from whatever
-    scale completed, matching scale's own interruption behavior.
+    """Run segmetric.tag split/name pipeline, then segmetric.scale's
+    detect/crop pipeline on that output, then merge the two into one combined
+    summary.csv
     """
 
     def report(fraction, message):
@@ -62,7 +51,7 @@ def run_prepare_job(
 
     result = PrepareJobResult(output_dir=output_folder)
 
-    # ------------------------------------------------------------ stage 1: tag
+    ##------------------------------------------------------------ step 1: tag
     report(0.0, "Stage 1/2 — splitting and naming panels…")
     tag_result = run_panel_split_job(
         input_folder,
@@ -89,7 +78,7 @@ def run_prepare_job(
         )
         return result
 
-    # ---------------------------------------------------------- stage 2: scale
+    #--------------------------------------------------------- step 2: scale
     report(0.5, "Stage 2/2 — detecting markers, computing scale, cropping…")
     scale_result = run_scale_job(
         tag_result.output_dir,  # <output>/panels, feeding straight into scale
@@ -111,7 +100,7 @@ def run_prepare_job(
         result.interrupted = True
         result.interrupted_during = "scale"
 
-    # --------------------------------------------------------------- summary
+    #------------------------------------------------------ join summary
     scale_csv_path = os.path.join(scale_result.output_dir, "scales.csv")
     if os.path.exists(scale_csv_path):
         summary_path = summary_path_for(output_folder)
@@ -132,3 +121,7 @@ def run_prepare_job(
         )
 
     return result
+
+
+
+

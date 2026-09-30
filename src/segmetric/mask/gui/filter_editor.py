@@ -1,3 +1,4 @@
+
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QDoubleSpinBox,
@@ -24,12 +25,13 @@ from ..core.presets import load_filter_preset, save_filter_preset
 _STARTING_POINTS = ["Forewing", "Hindwing", "Leg", "Blank"]
 
 
+
 class FilterEditorWidget(QWidget):
-    """Reusable filter picker + editor -- covers all 4 of §3's filter-setup
-    options: pick a default (1), pick a default then edit the spin boxes
+    """Reusable filter picker + editor.
+    Pick a default (1), pick a default then edit the spin boxes
     (2), load a custom filter from disk (3), or start from the Blank
-    template and edit (4). Used both for the single-type batch flow and,
-    embedded once per group, in the mixed-anatomy assignment screen.
+    template and edit (4). Used both for the single-type batch flow and, 
+    in the mixed-anatomy assignment screen.
     """
 
     def __init__(self, parent=None):
@@ -96,7 +98,7 @@ class FilterEditorWidget(QWidget):
         layout.addLayout(preset_row)
 
         self.blank_warning = QLabel(
-            "⚠ Starting from Blank -- all values are placeholders. Tune them "
+            "⚠ Starting from Blank, values are placeholders. Tune them "
             "before running."
         )
         self.blank_warning.setStyleSheet("color: #b06a00;")
@@ -140,7 +142,7 @@ class FilterEditorWidget(QWidget):
         self.fourier_freq_spin.setValue(settings.fourier_freq)
         self.min_blob_spin.setValue(settings.min_blob)
 
-    # -------------------------------------------------------------- state
+    # --------------------------------------------------------- state
     def current_settings(self) -> FilterSettings:
         return FilterSettings(
             first_pass_factor=self.first_pass_factor_spin.value(),
@@ -154,9 +156,7 @@ class FilterEditorWidget(QWidget):
         )
 
     def load_settings(self, settings: FilterSettings):
-        """Populate the editor from settings without touching the 'Start
-        from' radio selection (used for loading a custom/blank preset from
-        disk, or restoring a saved mixed-anatomy group).
+        """Fill out the editor.
         """
         for btn in self.start_buttons.values():
             btn.blockSignals(True)
@@ -169,7 +169,7 @@ class FilterEditorWidget(QWidget):
     def set_enabled(self, enabled):
         self.setEnabled(enabled)
 
-    # -------------------------------------------------------------- presets
+    ###---------------------------------------------------------- preset mods
     def on_load_preset(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Load filter preset", "", "JSON files (*.json)"

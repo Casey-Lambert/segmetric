@@ -1,10 +1,12 @@
+
+
 import cv2
 from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap
 
 from ..core.naming import OcrRegion, compute_search_bbox
 from ..core.splitting import load_first_page, split_into_grid
 
-PREVIEW_DPI = 200
+PREVIEW_DPI = 200 #change if you need more detail in preview 
 
 
 def load_preview_page(file_path, dpi=PREVIEW_DPI):
@@ -25,10 +27,7 @@ def bgr_to_qpixmap(image_bgr):
 
 def render_grid_preview(image_bgr, rows, cols, ocr_region: OcrRegion = None):
     """Return a QPixmap of image_bgr with rows x cols grid lines drawn over it.
-
-    ocr_region, if given, additionally highlights the sub-area of each panel
-    that computer-vision naming will search for text, so the search area can
-    be tuned by eye before committing to a full run.
+    Lets you se the split before running it - can adjust if there is need 
     """
     panels = split_into_grid(image_bgr, rows, cols)
     pixmap = bgr_to_qpixmap(image_bgr)
@@ -51,7 +50,13 @@ def render_grid_preview(image_bgr, rows, cols, ocr_region: OcrRegion = None):
             px1, py1, _, _ = panel_info["bbox"]
             panel = panel_info["panel"]
             rx1, ry1, rx2, ry2 = compute_search_bbox(panel.shape, ocr_region)
-            painter.drawRect(px1 + rx1, py1 + ry1, rx2 - rx1, ry2 - ry1)
+            painter.drawRect(px1 +  rx1, py1 + ry1, rx2 - rx1, ry2 - ry1)
 
     painter.end()
     return pixmap
+
+
+
+
+
+

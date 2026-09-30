@@ -246,3 +246,21 @@ def test_mask_and_segment_assignment_widgets_recognize_ids_before_run_is_clicked
         "Not among the discovered object ids"
         not in window.segment_tab.object_id_widget.coverage_label.text()
     )
+
+
+def test_masks_hint_text_is_the_same_before_and_after_toggling_the_mask_stage(qapp):
+    """Regression test: the Segment/Landmark "Masks folder" hint used to be
+    one wording at startup and a different, older one after Mask was checked
+    and then unchecked again (two separate hard-coded strings that drifted
+    apart). Both spots now share one constant per tab.
+    """
+    window = MainWindow()
+    tabs = (window.segment_tab, window.landmark_tab)
+    initial = [tab.masks_hint.text() for tab in tabs]
+
+    window.mask_tab.enabled_checkbox.setChecked(True)
+    for tab in tabs:
+        assert tab.masks_hint.text() == "Auto: using this run's Mask stage output."
+
+    window.mask_tab.enabled_checkbox.setChecked(False)
+    assert [tab.masks_hint.text() for tab in tabs] == initial

@@ -1,3 +1,5 @@
+
+
 import os
 
 import cv2
@@ -16,10 +18,7 @@ from .manual_canvas import _RectCanvas
 
 
 class _CropPanel(QWidget):
-    """Canvas + live bbox readout -- shared by SetCropDialog (one
-    representative image, for "whole batch" mode) and CropReviewDialog
-    (click-through, one per image).
-    """
+ 
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -88,10 +87,9 @@ class _CropPanel(QWidget):
         return (round(x1), round(y1), round(x2), round(y2))
 
 
+
 class SetCropDialog(QDialog):
-    """Set one manual crop region on a single representative image -- used
-    for "apply to whole batch" mode. Exposes .result_bbox ((x1,y1,x2,y2))
-    after a successful exec()/accept().
+    """Set one manual crop region on a single representative image
     """
 
     def __init__(self, image_bgr, file_name, parent=None):
@@ -125,13 +123,7 @@ class SetCropDialog(QDialog):
 
 
 class CropReviewDialog(QDialog):
-    """Click-through: set a crop region individually on every file in the
-    batch. Previous/Next save the current file's region before moving (a
-    revisited image's canvas starts blank -- only the resulting bbox is
-    cached, not the drag itself -- so the result label says "Already set"
-    to avoid that reading as "not set yet"). Close refuses (with a
-    warning) until every file has a region. Exposes .results ({file_name:
-    (x1,y1,x2,y2)}) once accepted.
+    """Click-through: set a crop region individually on every file uploaded
     """
 
     def __init__(self, file_paths, parent=None):
@@ -211,3 +203,5 @@ class CropReviewDialog(QDialog):
             )
             return
         self.accept()
+
+

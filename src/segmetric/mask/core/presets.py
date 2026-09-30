@@ -1,3 +1,5 @@
+
+
 import json
 from dataclasses import asdict, fields
 
@@ -6,6 +8,8 @@ from segmetric.errors import SegMetricError
 from .model import FilterGroup, FilterSettings
 
 _NUMERIC_FILTER_FIELDS = [f.name for f in fields(FilterSettings) if f.name != "name"]
+
+
 
 
 def filter_to_dict(settings: FilterSettings) -> dict:
@@ -48,10 +52,11 @@ def load_filter_preset(path) -> FilterSettings:
         ) from exc
 
 
+
+
 def save_object_id_mapping(path, groups):
-    """Save a mixed-anatomy object-id -> filter mapping template: a list of
-    FilterGroup(object_ids, filter), each filter embedded inline (not a
-    reference to a separate file) so the template is fully self-contained.
+    """Save a mixed-anatomy filter mapping template: a list of
+    FilterGroup(object_ids, filter), each filter embedded inline so the template is fully self-contained.
     """
     data = [
         {"object_ids": list(group.object_ids), "filter": filter_to_dict(group.filter)}

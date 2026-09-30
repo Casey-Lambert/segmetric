@@ -1,3 +1,4 @@
+
 import csv
 import os
 from dataclasses import dataclass
@@ -5,8 +6,10 @@ from dataclasses import dataclass
 from segmetric.errors import SegMetricError
 from segmetric.tag.core.discovery import find_input_files
 
-# segmetric.scale's pipeline saves crops as "<original_stem>_cropped.<ext>"
-# (see segmetric/scale/core/pipeline.py's out_name construction).
+# preserved saving methods saves crops as "<original_stem>_cropped.<ext>"
+# 
+
+
 CROPPED_SUFFIX = "_cropped"
 
 
@@ -45,20 +48,16 @@ def _load_scale_rows_by_stem(scale_csv_path):
 
 
 def match_crops_to_scale_rows(crops_dir, scale_csv_path):
-    """Discover crop images in crops_dir (via tag's find_input_files) and
-    match each to its mm_per_pixel from scale_csv_path (segmetric.scale's
-    scales.csv or segmetric.prepare's summary.csv -- both key rows by the
-    same file_name/mm_per_pixel columns).
+    """Discover crop images in crops_dir and
+    match to refrence  mm_per_pixel from scale_csv_path (generated with segmetric.scale)
+     or summary.csv (generated with segmetric.prepare)
 
-    Matching is an exact stem match: a crop saved as "<stem>_cropped.<ext>"
-    is looked up by "<stem>" against the scale CSV's own file_name column
-    (also stripped to its stem) -- see core/matching.py's module docstring
-    in the plan for why this is exact, not the notebook's fuzzy heuristic.
+    Exact stem match:  "<stem>_cropped.<ext>"
+    Scale looked up by "<stem>" against the scale CSV's file_name column
 
     Returns (matched, unmatched_names): matched is a list[MatchedCrop];
-    unmatched_names is a list of crop file basenames that had no scale row
-    (missing entirely, or an unparseable mm_per_pixel value) -- the caller
-    is expected to surface these rather than silently drop them.
+    unmatched_names is a list of file basenames that had no scale
+    (missing entirely, or non-real value) which would be dropped if not corrected
     """
     crop_paths = find_input_files(crops_dir)
     scale_by_stem = _load_scale_rows_by_stem(scale_csv_path)

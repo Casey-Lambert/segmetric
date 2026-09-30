@@ -1,7 +1,9 @@
+
 import os
 from glob import glob
 
 from .errors import SegMetricError
+
 
 SUPPORTED_EXTENSIONS = (
     "*.pdf",
@@ -12,13 +14,9 @@ SUPPORTED_EXTENSIONS = (
     "*.tiff",
 )
 
-
 def find_input_files(input_folder):
     """Return a sorted list of PDF/PNG/JPG/JPEG/TIFF paths directly inside
-    input_folder.
-
-    Raises SegMetricError with a researcher-readable message if the folder is
-    missing or contains none of the supported file types.
+    input_folder. Includes error message when fail to get readable files
     """
     if not input_folder or not os.path.isdir(input_folder):
         raise SegMetricError(
@@ -37,3 +35,7 @@ def find_input_files(input_folder):
         )
 
     return files
+
+
+
+

@@ -1,3 +1,5 @@
+
+#
 import os
 
 import cv2
@@ -24,8 +26,8 @@ from ..core.correction import ADD, REMOVE, apply_brush_stroke
 from ..core.measurement import measure_object
 from ..core.tagging import tagged_mask_filename
 
-# Matches the notebook's WingMaskEditor._get_overlay exactly.
-_OVERLAY_GREEN = (0, 210, 0)  # channel-order-agnostic (pure green)
+# Mask is green, change if green is not optimal color for you 
+_OVERLAY_GREEN = (0, 210, 0)  # channel-order-agnostic (green)
 _OVERLAY_MASK_ALPHA = 0.55
 
 TAG_DAMAGE = "damage"
@@ -48,16 +50,12 @@ ZOOM_STEP = 1.15
 
 
 class _MaskCanvas(QWidget):
-    """Shows image_bgr with mask blended in green, and paints ADD/REMOVE
-    brush strokes onto the mask on mouse drag. Coordinates are translated
-    between widget pixels and image pixels (where the mask actually lives).
+    """Shows image_bgr with mask. ADD/REMOVE
+    brush strokes onto the mask on mouse click+drag. Coordinates are translated
+    between widget pix and image pixels (where the mask actually lives).
 
-    Supports cursor-centered scroll-wheel zoom (from MIN_ZOOM=1.0, "fit to
-    window", up to MAX_ZOOM) and panning by holding Space and dragging.
-    Only the *visible* portion of the image is ever rasterized to a
-    QPixmap (cropped from the full-size overlay array first), so zooming
-    in on a large crop doesn't blow up memory/CPU the way scaling the
-    whole image up would.
+    Only the visible part of the the image is rasterized to a
+    QPixmap so zooming remains efficent and doesn't crash anything with a high processing load
     """
 
     stroke_finished = pyqtSignal()
@@ -112,7 +110,7 @@ class _MaskCanvas(QWidget):
         self.zoom_changed.emit(self.zoom)
         self.update()
 
-    # -------------------------------------------------------------- coords
+    # ------------------------------------------------- coord
     def _recompute_geometry(self):
         if self.image_bgr is None or self.width() == 0 or self.height() == 0:
             self._display_rect = QRect()
@@ -124,7 +122,7 @@ class _MaskCanvas(QWidget):
         if self.pan_center is None:
             self.pan_center = (w / 2, h / 2)
         else:
-            self._clamp_pan()  # safe even if the image changed size since the last load
+            self._clamp_pan()  # safe if image size has changed 
 
         self._base_scale = min(self.width() / w, self.height() / h)
         self._effective_scale = self._base_scale * self.zoom
@@ -145,9 +143,8 @@ class _MaskCanvas(QWidget):
         )
 
     def _image_point_from_widget(self, wx, wy):
-        """Image-space point under (wx, wy), or None if outside the image
-        (or nothing loaded) -- used for clicks/painting, which must land on
-        actual image content.
+        """Image-space point under (wx, wy). Clicks/painting, must land on
+       image.
         """
         if self.image_bgr is None or self._display_rect.width() == 0:
             return None
@@ -159,8 +156,8 @@ class _MaskCanvas(QWidget):
         return (rel_x * w, rel_y * h)
 
     def _image_point_at(self, wx, wy):
-        """Unclamped image-space point under (wx, wy) -- used for zoom-to-
-        cursor math, where the cursor may be over letterboxed empty space.
+        """Unclamped image-space point under (wx, wy)
+         used for zoom-to-cursor math process.
         """
         if self._effective_scale == 0:
             return (0.0, 0.0)
@@ -168,7 +165,7 @@ class _MaskCanvas(QWidget):
         iy = self.pan_center[1] + (wy - self.height() / 2) / self._effective_scale
         return (ix, iy)
 
-    # -------------------------------------------------------------- paint
+    # -------------------------------------------------------------- painting
     def paintEvent(self, event):
         self._recompute_geometry()
         painter = QPainter(self)
@@ -180,8 +177,8 @@ class _MaskCanvas(QWidget):
 
         h, w = self.image_bgr.shape[:2]
         scale = self._effective_scale
-        # Visible sub-region of the image (in image pixels) -- crop *before*
-        # rasterizing, so a zoomed-in view of a large crop stays cheap.
+        # Visible sub-region of the image (in image pixels) 
+        # done before rasterizing, so a zoomed-in view of a large image is still computationally cheap.
         ix0 = max(0, int((0 - self._display_rect.x()) / scale))
         iy0 = max(0, int((0 - self._display_rect.y()) / scale))
         ix1 = min(w, int((self.width() - self._display_rect.x()) / scale) + 1)
@@ -215,7 +212,7 @@ class _MaskCanvas(QWidget):
         super().resizeEvent(event)
         self._recompute_geometry()
 
-    # --------------------------------------------------------- zoom / pan
+    # ----------------------------------------------------------------_ zoom / pan
     def wheelEvent(self, event):
         if self.image_bgr is None:
             return
@@ -256,7 +253,7 @@ class _MaskCanvas(QWidget):
         else:
             super().keyReleaseEvent(event)
 
-    # -------------------------------------------------------------- mouse
+    # -------------------------------------------------------------- mouse helpers
     def mousePressEvent(self, event):
         if self.image_bgr is None or event.button() != Qt.MouseButton.LeftButton:
             return
@@ -318,10 +315,7 @@ class _MaskCanvas(QWidget):
 
 
 class _TagControls(QWidget):
-    """⚠ Damage / ☐ Blank / custom-text tagging, mutually exclusive
-    (clicking the active one again clears it). The custom tag's text stays
-    in the field after Apply, so it's a single click to reuse on the next
-    file.
+    """⚠ Damage / ☐ Blank / custom-text tagging 
     """
 
     tag_changed = pyqtSignal(str)
@@ -377,10 +371,10 @@ class _TagControls(QWidget):
         return self._current_tag
 
 
+
+
 class _CorrectionPanel(QWidget):
-    """Canvas + brush controls + tag controls + live measurement readout --
-    the reusable core shared by the single-file CorrectionDialog and the
-    click-through ReviewDialog.
+    """Canvas + brush controls + tag controls + live measurement readout - reusable
     """
 
     def __init__(self, parent=None):
@@ -470,7 +464,7 @@ class _CorrectionPanel(QWidget):
         return m
 
     def on_reset(self):
-        # Preserve the current zoom/pan -- only the mask content resets.
+        # Preserve the current zoom/pan - stops jumpy images 
         self.canvas.set_image_and_mask(self.canvas.image_bgr, self._auto_mask)
         self._remeasure()
 
@@ -485,9 +479,8 @@ class _CorrectionPanel(QWidget):
 
 
 class CorrectionDialog(QDialog):
-    """Manual mask correction for a single object (§6): brush ADD/REMOVE
-    over the auto-generated mask, tagging, a live length/width readout,
-    Reset (back to the auto-generated mask), and Save/Cancel.
+    """Manual mask correction for a single object (§6): brush ADD/REMOVE, tagging, a live length/width,
+    Reset (returns to auto-generated mask), and Save/Cancel.
     """
 
     def __init__(self, image_bgr, mask, mm_per_pixel, file_name, tag="", parent=None):
@@ -520,16 +513,10 @@ class CorrectionDialog(QDialog):
 
 
 class ReviewDialog(QDialog):
-    """Click-through correction (new): navigate every matched object in one
+    """Click-through correction: navigate every matched object in one
     window. Previous/Next save the current object's mask + tag before
-    moving; Close saves the current object, then returns to the results
-    table. There is no Cancel here -- every navigation action saves, per
-    design (unlike the single-file CorrectionDialog, which keeps its
-    Save/Cancel semantics unchanged).
-
-    main_window must provide: mask_result (with .rows, .masks_dir),
-    _crop_by_filename, and save_corrected_row(row_index, crop, mask,
-    measurement, tag).
+    moving; Close saves the current object, returns results
+    table.
     """
 
     def __init__(self, main_window, start_index=0, parent=None):
@@ -611,3 +598,4 @@ class ReviewDialog(QDialog):
     def on_close(self):
         self._save_current()
         self.accept()
+

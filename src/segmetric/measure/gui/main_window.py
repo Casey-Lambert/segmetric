@@ -1,15 +1,5 @@
-"""segmetric-measure: a shared shell over segmetric.mask + segmetric.segment
-+ segmetric.landmark. One Folders section (Scales file / Crops folder /
-Output folder) and one Metadata-preset load, entered once instead of per
-tool; a tab per measurement type with its own enable checkbox, so any
-subset can run this time. Run validates everything up front, then walks
-enabled stages in a fixed Mask -> Segment -> Landmark order (skipping
-disabled ones) -- Mask runs as a real background job with a progress bar,
-Segment/Landmark each hand control to their own existing interactive
-review window, embedded directly here. See the segmetric-measure plan
-(and this repo's README) for why this can't be one unattended Run button
-the way segmetric.prepare's tag+scale combination is: segment and landmark
-have no batch entry point at all, only an interactive click-through.
+"""segmetric-measure:  shell over segmetric.mask + segmetric.segment
++ segmetric.landmark. Only interactive click though, limited applications.
 """
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -72,7 +62,7 @@ class MainWindow(QMainWindow):
 
         self._build_ui()
 
-    # ------------------------------------------------------------------ UI
+    ###------------------------------------------------------------------ UI
     def _build_ui(self):
         central = QWidget()
         outer = QVBoxLayout(central)
@@ -178,9 +168,7 @@ class MainWindow(QMainWindow):
 
         hint = QLabel(
             "Optional. Load a preset built and saved in segmetric-set to "
-            "read each crop's object id -- shared by every enabled stage "
-            "below (mixed-batch filter/preset routing, the object-id "
-            "filter) and added to measure_summary.csv."
+            "read each crop's object id."
         )
         hint.setStyleSheet("color: gray;")
         hint.setWordWrap(True)
@@ -218,7 +206,7 @@ class MainWindow(QMainWindow):
     def _show_error(self, message):
         QMessageBox.critical(self, "SegMetric.Measure — Error", message)
 
-    # -------------------------------------------------------------- folders
+    # ------------------------------------------------------------ assign folders
     def on_browse_scales(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select scales file", "", "CSV files (*.csv)")
         if not path:
@@ -277,10 +265,7 @@ class MainWindow(QMainWindow):
 
     def _refresh_object_id_widgets(self):
         """Re-scans and re-populates every object-id-aware widget across
-        all three tabs -- both the always-reactive filter checklists
-        (Segment/Landmark) and the Mixed-mode assignment widgets
-        (Mask/Segment) that used to only populate once Run was clicked.
-        Called whenever shared Folders/Metadata state changes.
+        all three tabs. Called when shared folders/metadata change
         """
         mask_enabled = self.mask_tab.enabled_checkbox.isChecked()
         segment_masks_dir = resolve_masks_dir(self.output_folder or "", mask_enabled, self.segment_tab.masks_folder)
@@ -297,7 +282,7 @@ class MainWindow(QMainWindow):
             self.scales_file, self.crops_folder, segment_masks_dir, self.metadata_preset
         )
 
-    # -------------------------------------------------------------------- run
+    ###------------------------------------------------------------------- run
     def on_run(self):
         mask_enabled = self.mask_tab.enabled_checkbox.isChecked()
         segment_enabled = self.segment_tab.enabled_checkbox.isChecked()

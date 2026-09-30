@@ -1,4 +1,7 @@
+
+
 import os
+
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -52,12 +55,6 @@ class MainWindow(QMainWindow):
 
         self.scale_worker = None
 
-        # No-markers manual mode -- see _build_manual_controls/on_set_scale/
-        # on_set_crop. _manual_crop_bbox_by_name stays None both before any
-        # crop is configured and whenever "No crop" is selected; on_run
-        # only treats it as "no cropping" when the no-crop is
-        # checked (see _effective_crop_bbox_by_name), so switching crop
-        # modes never accidentally reuses a stale configuration.
         self._manual_scale_by_name = {}
         self._manual_scale_source_by_name = {}
         self._manual_crop_bbox_by_name = None
@@ -111,10 +108,10 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(folders_group)
 
-        # -- marker mode --
+        # -- marker --
         layout.addWidget(self._build_marker_mode_controls())
 
-        # -- output format --
+        # -- output formatimg ----
         format_group = QGroupBox("Output format")
         format_layout = QHBoxLayout(format_group)
         self.tiff_radio = QRadioButton("TIFF (recommended)")
@@ -177,22 +174,22 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.scale_group)
 
-        # -- crop region (relative to markers) --
+        # --  crop region --
         self.crop_region_group = self._build_crop_region_controls()
         layout.addWidget(self.crop_region_group)
 
-        # -- thresholds (advanced) --
+        # --  thresholds--
         self.threshold_wrapper = self._build_threshold_controls()
         layout.addWidget(self.threshold_wrapper)
 
-        # -- blob fallback tuning (advanced) --
+        # --  blob fallback--
         self.blob_wrapper = self._build_blob_controls()
         layout.addWidget(self.blob_wrapper)
 
-        # -- no-markers workflow (hidden until "Manually set scale" is picked) --
+        # --  no-markers workflow--
         layout.addWidget(self._build_manual_controls())
 
-        # -- presets --
+        # --  presets --
         preset_row = QHBoxLayout()
         self.save_preset_btn = QPushButton("Save Preset")
         self.save_preset_btn.clicked.connect(self.on_save_preset)
@@ -312,19 +309,12 @@ class MainWindow(QMainWindow):
         return self.manual_group
 
     def _build_crop_region_controls(self):
-        """Where, within the detected marker bounding box, to crop --
-        structurally identical to segmetric.tag's "OCR search region"
-        controls (anchor radios + a size-percentage spinbox per axis), a
-        three-way anchor group instead of tag's two-way one so "center"
-        (today's fixed behavior, kept as the default) is an explicit
-        choice alongside growing from one edge.
-        """
         group = QGroupBox("Crop")
         region_layout = QFormLayout(group)
 
         self.crop_v_top_radio = QRadioButton("Top")
         self.crop_v_center_radio = QRadioButton("Center")
-        self.crop_v_center_radio.setChecked(True)  # matches today's fixed quarter-trim
+        self.crop_v_center_radio.setChecked(True)  
         self.crop_v_bottom_radio = QRadioButton("Bottom")
         crop_v_anchor_group = QButtonGroup(group)
         for radio in (self.crop_v_top_radio, self.crop_v_center_radio, self.crop_v_bottom_radio):
@@ -345,7 +335,7 @@ class MainWindow(QMainWindow):
 
         self.crop_h_left_radio = QRadioButton("Left")
         self.crop_h_center_radio = QRadioButton("Center")
-        self.crop_h_center_radio.setChecked(True)  # matches today's fixed full-width
+        self.crop_h_center_radio.setChecked(True)  
         self.crop_h_right_radio = QRadioButton("Right")
         crop_h_anchor_group = QButtonGroup(group)
         for radio in (self.crop_h_left_radio, self.crop_h_center_radio, self.crop_h_right_radio):
@@ -459,6 +449,7 @@ class MainWindow(QMainWindow):
         wrapper_layout.addWidget(self.threshold_group)
         return wrapper
 
+
     def _build_blob_controls(self):
         self.blob_advanced_checkbox = QCheckBox("Customize blob detection threshold")
         self.blob_advanced_checkbox.toggled.connect(self.on_blob_advanced_toggle)
@@ -537,7 +528,7 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         self._update_preview()
 
-    # ------------------------------------------------------------- logging
+    # ------------------------------------------------------- logging
     def _log(self, message):
         self.log_view.appendPlainText(message)
 
@@ -652,11 +643,7 @@ class MainWindow(QMainWindow):
         return bool(names) and all(name in self._manual_crop_bbox_by_name for name in names)
 
     def _effective_crop_bbox_by_name(self):
-        """None means "no cropping" -- driven by the crop-mode radio itself
-        (not just whatever _manual_crop_bbox_by_name happens to hold), so
-        switching back to "No crop" after configuring a region never
-        accidentally reapplies the stale configuration.
-        """
+       
         if self.no_crop_radio.isChecked():
             return None
         return self._manual_crop_bbox_by_name
@@ -682,7 +669,7 @@ class MainWindow(QMainWindow):
         self.crop_region_group.setEnabled(enabled)
 
     # -------------------------------------------------------------- 
-    # "Marker Mode"
+    # Using the standard format - "Marker Mode"
     # -------------------------------------------------------------- 
     def _on_marker_mode_changed(self, _checked):
         no_markers = self.no_markers_radio.isChecked()
@@ -784,7 +771,7 @@ class MainWindow(QMainWindow):
         self.crop_status_label.setStyleSheet("color: #006600;")
         self._update_run_button_state()
 
-    # -------------------------------------------------------- folder pick
+    # -------------------------------------------------folder selection 
     def on_browse_input(self):
         folder = QFileDialog.getExistingDirectory(self, "Select input folder")
         if not folder:
@@ -804,8 +791,7 @@ class MainWindow(QMainWindow):
         self.input_line.setText(folder)
         self.first_input_file = files[0]
 
-        # A new input folder invalidates any manual scale/crop already
-        # configured against the old one's file list.
+
         self._manual_scale_by_name = {}
         self._manual_scale_source_by_name = {}
         self._manual_crop_bbox_by_name = None
@@ -835,7 +821,7 @@ class MainWindow(QMainWindow):
         self.output_line.setText(folder)
         self._update_run_button_state()
 
-    # ------------------------------------------------------------- preview
+    # ----------------------------------------------------- preview
     def _update_preview(self):
         if self.preview_image_bgr is None:
             return
@@ -843,7 +829,7 @@ class MainWindow(QMainWindow):
         if self.no_markers_radio.isChecked():
             # No marker detection to preview in this mode -- just show the
             # plain image; "Set Scale…"/"Set Crop Region…" open their own
-            # interactive canvases.
+          
             pixmap = bgr_to_qpixmap(self.preview_image_bgr)
             status_text = "No-markers mode -- use \"Set Scale…\" / \"Set Crop Region…\" below."
         else:
@@ -867,7 +853,7 @@ class MainWindow(QMainWindow):
         self.blob_advanced_group.setEnabled(checked)
         self._update_preview()
 
-    # ------------------------------------------------------------ presets
+    # -------------------------------------------------------------------presets
     def on_save_preset(self):
         path, _ = QFileDialog.getSaveFileName(
             self, "Save preset", "scale_preset.json", "JSON files (*.json)"
@@ -902,7 +888,7 @@ class MainWindow(QMainWindow):
         self._update_preview()
         self._log(f"Preset loaded from {path}")
 
-    # ------------------------------------------------------------------ run
+    # -------------------------------------------
     def on_run(self):
         self._set_controls_enabled(False)
         self.stop_btn.setEnabled(True)

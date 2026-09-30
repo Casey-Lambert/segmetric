@@ -1,11 +1,12 @@
+
+
 import cv2
 import numpy as np
 
 
 def rotate_mask_long_axis(mask):
     """Rotate mask (uint8 0/1) so its largest contour's long axis is
-    horizontal. Matches the notebook's rotate_mask_long_axis exactly.
-    Returns mask unchanged if it has no contours.
+    horizontal.
     """
     contours, _ = cv2.findContours(
         (mask * 255).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
@@ -23,8 +24,8 @@ def rotate_mask_long_axis(mask):
 
 
 def orient_base_left(mask):
-    """Flip mask horizontally if needed so its wider ("base") end sits on
-    the left -- compares mask height in the left vs. right 20% strips.
+    """Flip mask horizontally so wider end sits on
+    the left . compares mask height in the left vs. right 20% strips.
     Matches the notebook's orient_base_left exactly.
     """
     ys, xs = np.nonzero(mask)
@@ -42,11 +43,10 @@ def orient_base_left(mask):
     return np.fliplr(mask) if right_h > left_h else mask
 
 
+
 def measure_wing(mask):
     """Length = horizontal extent; width = the tallest vertical span at any
-    single column. Matches the notebook's measure_wing exactly. Call this
-    only after rotate_mask_long_axis + orient_base_left -- it assumes the
-    mask is already axis-aligned.
+    single column, assuming mask is already axis-aligned.
 
     Returns (length_px, width_px, width_col).
     """
@@ -65,10 +65,7 @@ def measure_wing(mask):
 
 
 def measure_object(mask, mm_per_pixel):
-    """Full measurement for one object's mask: axis-corrected length/width
-    (via rotate_mask_long_axis + orient_base_left + measure_wing) plus raw
-    area (rotation-invariant, measured on the original mask).
-
+    """Axis-corrected length/width plus raw area.
     Returns dict(length_px, width_px, length_mm, width_mm, area_px, area_mm2).
     """
     area_px = int(np.sum(mask > 0))

@@ -1,3 +1,5 @@
+
+
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from segmetric.errors import SegMetricError
@@ -49,9 +51,6 @@ class ScaleJobWorker(QThread):
 
 
 class ManualScaleJobWorker(QThread):
-    """Runs the no-markers manual scale/crop job off the GUI thread. Same
-    signal shape as ScaleJobWorker, calling run_manual_scale_job instead.
-    """
 
     progress = pyqtSignal(float, str)
     error = pyqtSignal(str)
@@ -91,3 +90,6 @@ class ManualScaleJobWorker(QThread):
             self.error.emit(str(exc))
         except Exception:
             self.error.emit("An unexpected error occurred while running the manual scale job.")
+
+
+

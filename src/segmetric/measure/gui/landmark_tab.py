@@ -1,13 +1,5 @@
-"""The Landmark tab of segmetric-measure: Landmark's tool-specific settings
-(optional masks folder used purely as a dimming reference, _blank
-exclusion, an object-id filter). No preset/batch-type concept -- landmark
-placement is freeform, same as its standalone tool. Scales file / Crops
-folder / Output folder / Metadata preset all live once on the shared
-MainWindow -- see refresh_object_id_filter(), called by MainWindow
-whenever any of that shared state changes, mirroring
-segmetric.landmark.gui.setup_window.SetupPage's own reactive
-_refresh_object_id_filter (untouched, still used standalone).
-"""
+
+
 from PyQt6.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -24,6 +16,10 @@ from PyQt6.QtWidgets import (
 from segmetric.errors import SegMetricError
 from segmetric.prepare.core.metadata import apply_preset_to_filename
 from segmetric.segment.core.matching import match_crops
+
+# Shown at startup and whenever Mask is not enabled for the run; defined once
+# so the two spots that set it can't drift apart.
+MASKS_HINT = "(Optional) segmetric.mask output applied as visual guide."
 
 
 class LandmarkTab(QWidget):
@@ -56,9 +52,7 @@ class LandmarkTab(QWidget):
         masks_row.addWidget(self.masks_clear)
         inputs_layout.addRow("Masks folder:", masks_row)
 
-        self.masks_hint = QLabel(
-            "(Optional) segmetric.mask output applied as visual guide."
-        )
+        self.masks_hint = QLabel(MASKS_HINT)
         self.masks_hint.setStyleSheet("color: gray;")
         self.masks_hint.setWordWrap(True)
         inputs_layout.addRow("", self.masks_hint)
@@ -99,14 +93,9 @@ class LandmarkTab(QWidget):
         if auto_chained:
             self.masks_hint.setText("Auto: using this run's Mask stage output.")
         else:
-            self.masks_hint.setText(
-                "Optional -- segmetric.mask output, shown as a dimmed-outside-"
-                "mask visual reference only, never a constraint on where you "
-                "can click. If Mask is also enabled above, this is filled in "
-                "automatically from its output once you Run."
-            )
+            self.masks_hint.setText(MASKS_HINT)
 
-    # -------------------------------------------------------------- browse
+    # ------------------------------------------------------------------- browse
     def on_browse_masks(self):
         folder = QFileDialog.getExistingDirectory(self, "Select masks folder")
         if not folder:
@@ -118,7 +107,7 @@ class LandmarkTab(QWidget):
         self.masks_folder = None
         self.masks_line.clear()
 
-    # ----------------------------------------------------- object-id filter
+    # ----------------------------------------------------- object-id based filter assignment 
     def selected_object_ids(self):
         if not self._object_id_checkboxes:
             return None

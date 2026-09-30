@@ -60,12 +60,12 @@ def load_scale_preset(path) -> ScaleSettings:
         ) from exc
     except json.JSONDecodeError as exc:
         raise SegMetricError(
-            f"'{path}' is not a valid preset file (invalid JSON)."
+            f"'{path}' is not a valid preset file (.JSON)."
         ) from exc
 
     try:
         return settings_from_dict(data)
     except (TypeError, AttributeError) as exc:
         raise SegMetricError(
-            f"'{path}' doesn't look like a SegMetric.Scale preset file."
+            f"'{path}' not a SegMetric.Scale preset file."
         ) from exc

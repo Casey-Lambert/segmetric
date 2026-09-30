@@ -1,3 +1,4 @@
+
 import os
 
 import cv2
@@ -18,9 +19,7 @@ from .manual_canvas import _TwoPointCanvas
 
 
 class _ScalePanel(QWidget):
-    """Canvas + known-distance entry + live computed-scale readout --
-    shared by SetScaleDialog (one representative image, for "whole batch"
-    mode) and ScaleReviewDialog (click-through, one per image).
+    """Canvas + known-distance entry + live computed-scale readout 
     """
 
     def __init__(self, parent=None):
@@ -44,6 +43,7 @@ class _ScalePanel(QWidget):
         hint.setStyleSheet("color: gray;")
         hint.setWordWrap(True)
         layout.addWidget(hint)
+
 
         controls_row = QHBoxLayout()
         controls_row.addWidget(QLabel("Known distance:"))
@@ -99,9 +99,7 @@ class _ScalePanel(QWidget):
 
 
 class SetScaleDialog(QDialog):
-    """Set one manual scale on a single representative image -- used for
-    "apply to whole batch" mode. Exposes .result_scale (float) after a
-    successful exec()/accept().
+    """Set manual scale on a single image
     """
 
     def __init__(self, image_bgr, file_name, parent=None):
@@ -136,14 +134,7 @@ class SetScaleDialog(QDialog):
 
 
 class ScaleReviewDialog(QDialog):
-    """Click-through: set a scale individually on every file in the batch.
-    Previous/Next save the current file's scale before moving (an image
-    that already has a saved value but wasn't re-clicked on this visit
-    keeps its old value -- only the resulting mm/pixel number is cached,
-    not the original two points, so a revisited image's canvas starts
-    blank; the result label says "Already set" so that's not mistaken for
-    "not set yet"). Close refuses (with a warning) until every file has a
-    value. Exposes .results ({file_name: mm_per_pixel}) once accepted.
+    """set scale for all files
     """
 
     def __init__(self, file_paths, parent=None):
@@ -211,6 +202,7 @@ class ScaleReviewDialog(QDialog):
             self.index += 1
             self._load_current()
 
+
     def on_close(self):
         self._save_current()
         missing = len(self.file_paths) - len(self.results)
@@ -222,3 +214,5 @@ class ScaleReviewDialog(QDialog):
             )
             return
         self.accept()
+
+

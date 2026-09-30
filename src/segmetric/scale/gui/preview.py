@@ -1,3 +1,4 @@
+
 import os
 
 import cv2
@@ -44,18 +45,6 @@ def _draw_markers(painter, pixmap, corners):
 
 
 def render_marker_preview(image_bgr, settings: ScaleSettings):
-    """Render a preview of what a real run would actually do to image_bgr.
-
-    A real run first prepares the image (crop tight to markers + 2x
-    upscale -- see core.preparation.prepare_image) before ever measuring
-    scale or computing the final crop, so this preview does the same: it
-    shows the *prepared* image, with detected ArUco markers (green
-    outlines) and the final crop box (orange rectangle) overlaid, using
-    the given detection/scale settings.
-
-    Returns (pixmap, status_text) -- status_text summarizes what was found,
-    e.g. "4 marker(s) found -- 0.042100 mm/pixel".
-    """
     detector = build_detector(settings)
     prepare_detector = build_prepare_detector(settings)
     prepared = prepare_image(
@@ -69,8 +58,8 @@ def render_marker_preview(image_bgr, settings: ScaleSettings):
     )
 
     if prepared is None:
-        # Can't even get past the notebook's Cell 7 step -- show the raw
-        # sample with whatever markers were found, for diagnostic purposes.
+        # Can't even get past step 7
+        # sample with found markers to diagnose error in detection 
         corners, ids = detect_markers(
             image_bgr,
             prepare_detector,
@@ -150,3 +139,5 @@ def render_marker_preview(image_bgr, settings: ScaleSettings):
         status_text = f"Only {n_found} marker(s) found — not enough to compute scale or crop"
 
     return pixmap, status_text
+
+

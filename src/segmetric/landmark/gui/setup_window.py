@@ -22,13 +22,7 @@ from ..core.matching import match_crops
 
 
 class SetupPage(QWidget):
-    """Required Scales file + Crops folder; optional Metadata preset,
-    Masks folder (recommended, used only as a visual dimming reference
-    while placing landmarks -- never a hard constraint on where you can
-    click), and an object-id filter (once a preset with an object-id
-    column is loaded) that narrows the working set. Placement itself is
-    freeform for every crop -- there's no batch-type/preset choice to make
-    here, unlike segmetric.mask/segment.
+    """Required Scales file and Crops folder; optional metadata preset,
     """
 
     ready_changed = pyqtSignal(bool)
@@ -161,8 +155,7 @@ class SetupPage(QWidget):
         return self.metadata_preset is not None and self.metadata_preset.object_id_column is not None
 
     def selected_object_ids(self):
-        """None if there's no object-id filter active at all (nothing to
-        filter by); otherwise the set of object ids currently checked.
+        """None if there's no object-id filter; otherwise the set of object ids is checked.
         """
         if not self._object_id_checkboxes:
             return None
@@ -255,8 +248,8 @@ class SetupPage(QWidget):
 
         if self.masks_folder and no_mask:
             self.mask_warning_label.setText(
-                f"⚠ {len(no_mask)} of {len(matched)} matched crop(s) have no usable "
-                "mask and will have no dimming reference while placing landmarks."
+                f"⚠ {len(no_mask)} of {len(matched)} matched crop(s) have no usable masks "
+                
             )
 
         counts = {}

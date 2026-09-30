@@ -1,3 +1,4 @@
+
 import os
 
 import cv2
@@ -47,6 +48,7 @@ _VEIN_ALPHA = 0.4
 MASKS_SUBDIR = "segment_masks"
 
 
+
 def _rgb_to_qpixmap(image_rgb):
     rgb = np.ascontiguousarray(image_rgb)
     height, width, _ = rgb.shape
@@ -88,18 +90,6 @@ ZOOM_STEP = 1.15
 
 
 class _CellCanvas(QWidget):
-    """Shows a crop in either Select mode (click a candidate cell patch to
-    toggle it in/out of the current step's mask) or Paint mode (ADD/REMOVE
-    brush over the current step's mask) -- one canvas, two interaction
-    modes, unlike segmetric.mask's paint-only canvas.
-
-    Supports cursor-centered scroll-wheel zoom (from MIN_ZOOM=1.0, "fit to
-    window", up to MAX_ZOOM) and panning by holding Space and dragging --
-    available in both Select and Paint mode. Only the *visible* portion of
-    the image is ever rasterized to a QPixmap (cropped from the full-size
-    overlay array first), so zooming in on a large scan doesn't blow up
-    memory/CPU the way scaling the whole image up would.
-    """
 
     stroke_finished = pyqtSignal()
     selection_changed = pyqtSignal()
@@ -112,7 +102,7 @@ class _CellCanvas(QWidget):
         self.n_cells = 0
         self.vein_mask = None
         self.show_veins = False
-        self.step_mask = None  # uint8 0/1
+        self.step_mask = None  # 0/1
         self.selected_labels = set()
         self.mode = SELECT
         self.paint_mode = ADD
@@ -125,7 +115,7 @@ class _CellCanvas(QWidget):
         self.pan_center = None  # (ix, iy) image point at the widget's center
         self._base_scale = 1.0
         self._effective_scale = 1.0
-        self._display_rect = QRect()  # where the *whole* image would land (may exceed the widget)
+        self._display_rect = QRect() 
         self._space_held = False
         self._panning = False
         self._pan_last_widget_pt = None
@@ -135,11 +125,7 @@ class _CellCanvas(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def load(self, image_rgb, labeled, n_cells, vein_mask, step_mask, selected_labels, reset_view=False):
-        """reset_view=True snaps back to "fit to window", centered -- used
-        when a genuinely new crop loads. False (the default) keeps whatever
-        zoom/pan the user had, just clamped to the new image's bounds --
-        used when switching step tabs or resetting a step's mask, where
-        jumping the view back to "fit" would be an annoying surprise.
+        """snap back image to center, stops click though from visual glitchyness
         """
         self.image_rgb = image_rgb
         self.labeled = labeled
@@ -168,7 +154,7 @@ class _CellCanvas(QWidget):
         self.zoom_changed.emit(self.zoom)
         self.update()
 
-    # -------------------------------------------------------------- coords
+    #-------------------------------------------------------------- coords
     def _recompute_geometry(self):
         if self.image_rgb is None or self.width() == 0 or self.height() == 0:
             self._display_rect = QRect()
@@ -180,8 +166,7 @@ class _CellCanvas(QWidget):
         if self.pan_center is None:
             self.pan_center = (w / 2, h / 2)
         else:
-            self._clamp_pan()  # safe even if the image changed size since the last load
-
+            self._clamp_pan()  # safe with changes image size 
         self._base_scale = min(self.width() / w, self.height() / h)
         self._effective_scale = self._base_scale * self.zoom
 
@@ -201,9 +186,7 @@ class _CellCanvas(QWidget):
         )
 
     def _image_point_from_widget(self, wx, wy):
-        """Image-space point under (wx, wy), or None if outside the image
-        (or nothing loaded) -- used for clicks/painting, which must land on
-        actual image content.
+        """Image-space point under (wx, wy), used for clicks/painting
         """
         if self.image_rgb is None or self._display_rect.width() == 0:
             return None
@@ -215,16 +198,14 @@ class _CellCanvas(QWidget):
         return (rel_x * w, rel_y * h)
 
     def _image_point_at(self, wx, wy):
-        """Unclamped image-space point under (wx, wy) -- used for zoom-to-
-        cursor math, where the cursor may be over letterboxed empty space.
-        """
+       
         if self._effective_scale == 0:
             return (0.0, 0.0)
         ix = self.pan_center[0] + (wx - self.width() / 2) / self._effective_scale
         iy = self.pan_center[1] + (wy - self.height() / 2) / self._effective_scale
         return (ix, iy)
 
-    # -------------------------------------------------------------- paint
+    #-------------------------------------------------------------- paintbrush tool application 
     def paintEvent(self, event):
         self._recompute_geometry()
         painter = QPainter(self)
@@ -239,8 +220,7 @@ class _CellCanvas(QWidget):
 
         h, w = self.image_rgb.shape[:2]
         scale = self._effective_scale
-        # Visible sub-region of the image (in image pixels) -- crop *before*
-        # rasterizing, so a zoomed-in view of a large scan stays cheap.
+        # efficent visualization to improve speed 
         ix0 = max(0, int((0 - self._display_rect.x()) / scale))
         iy0 = max(0, int((0 - self._display_rect.y()) / scale))
         ix1 = min(w, int((self.width() - self._display_rect.x()) / scale) + 1)
@@ -274,7 +254,7 @@ class _CellCanvas(QWidget):
         super().resizeEvent(event)
         self._recompute_geometry()
 
-    # --------------------------------------------------------- zoom / pan
+    #---------------------------------------------------- zoom & pan 
     def wheelEvent(self, event):
         if self.image_rgb is None:
             return
@@ -315,7 +295,7 @@ class _CellCanvas(QWidget):
         else:
             super().keyReleaseEvent(event)
 
-    # -------------------------------------------------------------- mouse
+    #-------------------------------------------------------------- mouse input
     def mousePressEvent(self, event):
         if self.image_rgb is None or event.button() != Qt.MouseButton.LeftButton:
             return
@@ -390,13 +370,6 @@ class _CellCanvas(QWidget):
 
 
 class ReviewWindow(QWidget):
-    """The main workflow: one crop at a time, step tabs (one per step in
-    that crop's resolved preset), Select/Paint modes per step, Blank/Damaged
-    status, live measurement, Previous/Next/Close -- every navigation saves
-    the crop you're leaving. Detection runs lazily per crop (off the GUI
-    thread) and is cached for the session.
-    """
-
     finished = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -409,13 +382,13 @@ class ReviewWindow(QWidget):
         self.csv_path = ""
 
         self.index = 0
-        self.rows = []  # one dict per matched item, index-aligned
+        self.rows = []  
         self._status = []  # "" | measured | blank | damaged, index-aligned
         self._detection_cache = {}  # index -> (image_rgb, wing_mask, labeled, n_cells, vein_mask, warned_no_mask)
-        self._step_state = {}  # index -> {step: {"mask": arr, "selected": set}}
+        self._step_state = {}  
         self._current_step = None
         self._detect_worker = None
-        self._all_steps_seen = []  # ordered union of every step name used
+        self._all_steps_seen = []  # join in order
 
         self._build_ui()
 
@@ -429,19 +402,14 @@ class ReviewWindow(QWidget):
         self.warning_label = QLabel("")
         self.warning_label.setStyleSheet("color: #b06a00;")
         self.warning_label.setWordWrap(True)
-        # Fixed height (2 lines' worth) so a warning appearing/disappearing
-        # between crops never reflows the layout below it -- see
-        # _start_detection's docstring note on why that matters.
+    
         self.warning_label.setFixedHeight(2 * self.warning_label.fontMetrics().height())
         layout.addWidget(self.warning_label)
 
         self.step_tabs_container = QWidget()
         self.step_tabs_row = QHBoxLayout(self.step_tabs_container)
         self.step_tabs_row.setContentsMargins(0, 0, 0, 0)
-        # Fixed height matching one row of tab buttons, so clearing/rebuilding
-        # tabs while the next crop's detection runs doesn't collapse this
-        # row to zero and shift everything below it (what caused the
-        # "zoom" flash between crops).
+    
         self.step_tabs_container.setFixedHeight(QPushButton("Step").sizeHint().height())
         layout.addWidget(self.step_tabs_container)
 
@@ -525,7 +493,7 @@ class ReviewWindow(QWidget):
         nav_row.addWidget(self.close_btn)
         layout.addLayout(nav_row)
 
-    # ------------------------------------------------------------- session
+    #-------------------------------------------------------
     def start(self, matched_items, preset_resolver, metadata_preset, output_folder):
         self.matched_items = matched_items
         self.preset_resolver = preset_resolver
@@ -552,7 +520,7 @@ class ReviewWindow(QWidget):
         )
         return preset, object_id, reason
 
-    # --------------------------------------------------------------- load
+    #----------------------------------------------------------loading 
     def _load_index(self, index):
         self.index = index
         item = self._current_item()
@@ -655,7 +623,7 @@ class ReviewWindow(QWidget):
         self._build_step_tabs(preset.steps)
         self._switch_step(preset.steps[0], reset_view=True)
 
-    # ----------------------------------------------------------- step tabs
+    # ------------------------------------------------------- tabs 
     def _clear_step_tabs(self):
         while self.step_tabs_row.count():
             item = self.step_tabs_row.takeAt(0)
@@ -707,7 +675,7 @@ class ReviewWindow(QWidget):
         data["mask"] = self.canvas.step_mask.copy()
         data["selected"] = set(self.canvas.selected_labels)
 
-    # -------------------------------------------------------------- modes
+    #---------------------------------------------------
     def _on_mode_toggle(self, _checked):
         self.canvas.set_mode(SELECT if self.select_radio.isChecked() else PAINT)
 
@@ -747,7 +715,7 @@ class ReviewWindow(QWidget):
             f"· Area {m['area_mm2']} mm²"
         )
 
-    # --------------------------------------------------------------- status
+    #--------------------------------------------------------------- show status
     def on_mark_blank(self, checked):
         self._status[self.index] = STATUS_BLANK if checked else ""
         self.damaged_btn.setChecked(False)
@@ -756,7 +724,7 @@ class ReviewWindow(QWidget):
         self._status[self.index] = STATUS_DAMAGED if checked else ""
         self.blank_btn.setChecked(False)
 
-    # ------------------------------------------------------------ save/nav
+    #------------------------------------------------------------ navigation & saving 
     def _save_current(self):
         if self._current_step is not None:
             self._store_canvas_into_step(self._current_step)
@@ -800,8 +768,7 @@ class ReviewWindow(QWidget):
             metadata_row = apply_preset_to_filename(item.original_stem, self.metadata_preset)
             for column, value in metadata_row.items():
                 row[column] = value
-            # Recorded whenever a metadata preset is loaded, single- or
-            # mixed-batch alike -- mirrors segmetric.mask's filter_used column.
+            #record the preset file name that was used to keep records 
             row["preset_used"] = preset.name
 
         self._write_csv_now()
@@ -841,3 +808,7 @@ class ReviewWindow(QWidget):
     def on_close(self):
         self._save_current()
         self.finished.emit()
+
+
+
+

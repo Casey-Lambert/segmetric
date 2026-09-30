@@ -1,3 +1,4 @@
+
 import csv
 import os
 from dataclasses import dataclass, field
@@ -13,6 +14,8 @@ from .masking import generate_mask
 from .measurement import measure_object
 from .model import FilterSettings
 from .tagging import tagged_mask_filename
+
+
 
 MASKS_SUBDIR = "masks"
 CSV_FILENAME = "mask_measurements.csv"
@@ -46,9 +49,9 @@ class MaskJobResult:
 def _resolve_filter(item, filter_resolver, metadata_preset: Preset):
     """Return (FilterSettings_or_None, object_id_or_None, error_reason_or_None).
 
-    filter_resolver is either a single FilterSettings (applied to every
+    filter_resolver is a single FilterSettings (applied to every
     item) or a dict[object_id -> FilterSettings] (mixed-anatomy batches --
-    each item's own object id, read via metadata_preset, selects its
+    each item's own object id, sourced from metadata_preset and assigns
     filter).
     """
     if isinstance(filter_resolver, FilterSettings):
@@ -88,6 +91,7 @@ def _write_csv(output_folder, rows, extra_columns, include_object_id, include_fi
     return csv_path
 
 
+
 def run_mask_job(
     matched_crops,
     filter_resolver,
@@ -96,32 +100,7 @@ def run_mask_job(
     progress_cb=None,
     should_stop=None,
 ):
-    """Generate a mask + length/width measurement for every item in
-    matched_crops (see core.matching.match_crops_to_scale_rows), saving
-    masks to <output_folder>/masks/ and one row per object to
-    <output_folder>/mask_measurements.csv.
-
-    filter_resolver is either a single FilterSettings (single-type batch --
-    applied to every item) or a dict[object_id -> FilterSettings]
-    (mixed-anatomy batch). In the dict case, metadata_preset must be given
-    with object_id_column set; an item whose object id has no matching
-    entry is skipped and flagged in result.skipped rather than failing the
-    whole batch.
-
-    metadata_preset, if given, also appends its own metadata columns (per
-    apply_preset_to_filename) to every row. An object_id column is added
-    whenever metadata_preset has an object_id_column set (single-type
-    batches included, if such a preset happens to be loaded); a filter_used
-    column is added whenever any metadata_preset is loaded at all. With no
-    metadata_preset, rows are just the base measurement fields -- matches
-    §7's "file name + length + width only" fallback.
-
-    Every row starts mask_status='auto' -- the GUI's correction dialog flips
-    one row to 'corrected' after a manual save, outside of this function
-    (see gui/correction_dialog.py).
-
-    should_stop, if given, is checked between items; stopping still writes
-    the CSV for whatever completed so far.
+    """Generate a mask + length/width measurement for every image in the batch
     """
     masks_dir = os.path.join(output_folder, MASKS_SUBDIR)
     try:

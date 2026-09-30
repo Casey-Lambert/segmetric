@@ -1,3 +1,5 @@
+
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -28,13 +30,6 @@ _STARTING_POINTS = ["Forewing Cell", "Leg Segments", "Blank"]
 
 
 class SegmentPresetEditorWidget(QWidget):
-    """Reusable preset picker + editor: pick a built-in template as-is or
-    to customize, load a custom preset from disk, or start from Blank --
-    the same 4-option shape as segmetric.mask's FilterEditorWidget. Editing
-    covers both the step sequence (add/remove/reorder/rename) and the 8
-    detection threshold values. Used both for the single-batch flow and,
-    embedded once per group, in the mixed-batch assignment screen.
-    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -151,7 +146,7 @@ class SegmentPresetEditorWidget(QWidget):
         spin.setSingleStep(step)
         return spin
 
-    # -------------------------------------------------------------- start
+    #------------------------------------------------------------- Starting
     def _make_start_handler(self, label):
         def handler(checked):
             if checked:
@@ -163,7 +158,7 @@ class SegmentPresetEditorWidget(QWidget):
         preset = BLANK_PRESET if label == "Blank" else DEFAULT_PRESETS[label]
         self.load_settings(preset)
 
-    # -------------------------------------------------------------- steps
+    #-------------------------------------------------------------- making steps
     def _current_steps(self):
         return [self.steps_list.item(i).text() for i in range(self.steps_list.count())]
 
@@ -215,7 +210,7 @@ class SegmentPresetEditorWidget(QWidget):
         text = item.text().strip().lstrip("_").replace(" ", "_")
         item.setText(text or "step")
 
-    # -------------------------------------------------------------- state
+    #---------------------------------------------------
     def current_preset(self) -> SegmentPreset:
         return SegmentPreset(
             name=self.name_edit.text().strip() or "Custom",
@@ -233,10 +228,6 @@ class SegmentPresetEditorWidget(QWidget):
         )
 
     def load_settings(self, preset: SegmentPreset):
-        """Populate the editor from preset without touching the 'Start
-        from' radio selection (used for loading a custom preset from disk,
-        or restoring a saved mixed-batch group).
-        """
         for btn in self.start_buttons.values():
             btn.blockSignals(True)
             btn.setChecked(False)
@@ -253,7 +244,7 @@ class SegmentPresetEditorWidget(QWidget):
         self.gaussian_sigma_spin.setValue(d.distance_gaussian_sigma)
         self.h_maxima_spin.setValue(d.h_maxima_h)
 
-    # -------------------------------------------------------------- presets
+    #-----------------------------------------------------------presets
     def on_load_preset(self):
         path, _ = QFileDialog.getOpenFileName(self, "Load preset", "", "JSON files (*.json)")
         if not path:
@@ -277,3 +268,7 @@ class SegmentPresetEditorWidget(QWidget):
             save_segment_preset(path, self.current_preset())
         except SegMetricError as exc:
             QMessageBox.critical(self, "SegMetric.Segment — Error", str(exc))
+
+
+
+

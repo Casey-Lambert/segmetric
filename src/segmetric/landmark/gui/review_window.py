@@ -53,19 +53,11 @@ _CLICK_TOLERANCE_PX = 12
 
 
 class _LandmarkCanvas(QWidget):
-    """Shows a crop with an optional dimmed-outside-mask reference overlay
-    and placed landmark dots. Placement is fully freeform: clicking empty
-    space always places a *new* landmark, defaulting to the smallest
-    number (as a string) not already used as a label on this crop --
-    double-clicking an existing dot opens a rename prompt (rejecting a
-    name already used by another landmark on this crop, so labels stay
-    unique). Clicking near an existing dot selects it instead of creating
-    a new one; dragging a selected dot moves it; arrow keys nudge it by
-    1px; Delete/Backspace removes it. Supports the same cursor-centered
-    scroll-wheel zoom and Space+drag pan as segmetric.segment's and
-    segmetric.mask's canvases -- ported unchanged (only the visible
-    portion of the image is ever rasterized to a QPixmap, so zooming in on
-    a large scan stays cheap).
+    """Shows a crop with OPTIONAL mask upload as a guide.
+    Clicking empty space places a new landmark, double-clicking an existing dot lets you rename the landmark. 
+    Clicking an existing dot to drag or use arrow keys to move (1px movement), 
+    Delete/Backspace removes the selected dot.
+    
     """
 
     points_changed = pyqtSignal()
@@ -95,9 +87,7 @@ class _LandmarkCanvas(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def load(self, image_rgb, mask, points, order, reset_view=False):
-        """reset_view=True snaps back to "fit to window", centered -- used
-        whenever a genuinely new crop loads (the only case this tool ever
-        needs, since there are no step tabs to switch between).
+        """ image loaded in
         """
         self.image_rgb = image_rgb
         self.mask = mask
@@ -135,9 +125,7 @@ class _LandmarkCanvas(QWidget):
         self.update()
 
     def _next_default_label(self):
-        """The smallest positive integer, as a string, not already used as
-        a label on this crop -- so labels stay small even after a delete
-        or a rename frees one up, instead of growing forever.
+        """Sequental landmarks naming
         """
         i = 1
         while str(i) in self.points:
@@ -156,7 +144,7 @@ class _LandmarkCanvas(QWidget):
         if self.pan_center is None:
             self.pan_center = (w / 2, h / 2)
         else:
-            self._clamp_pan()  # safe even if the image changed size since the last load
+            self._clamp_pan()  # works even if the image size has changed
 
         self._base_scale = min(self.width() / w, self.height() / h)
         self._effective_scale = self._base_scale * self.zoom
@@ -177,9 +165,8 @@ class _LandmarkCanvas(QWidget):
         )
 
     def _image_point_from_widget(self, wx, wy):
-        """Image-space point under (wx, wy), or None if outside the image
-        (or nothing loaded) -- used for clicks, which must land on actual
-        image content.
+        """Image-space point under (wx, wy). Clicks, which must land on
+        image content to work.
         """
         if self.image_rgb is None or self._display_rect.width() == 0:
             return None
@@ -191,8 +178,7 @@ class _LandmarkCanvas(QWidget):
         return (rel_x * w, rel_y * h)
 
     def _image_point_at(self, wx, wy):
-        """Unclamped image-space point under (wx, wy) -- used for zoom-to-
-        cursor math, where the cursor may be over letterboxed empty space.
+        """Unclamped image-space point under (wx, wy). Using for zoom and cursor.
         """
         if self._effective_scale == 0:
             return (0.0, 0.0)
@@ -215,7 +201,7 @@ class _LandmarkCanvas(QWidget):
                 best_dist, best_label = dist, label
         return best_label
 
-    # -------------------------------------------------------------- paint
+    # -------------------------------------------------------------------- paint
     def _build_overlay(self):
         vis = self.image_rgb.astype(np.float32)
         if self.dim_outside_mask and self.mask is not None:
@@ -235,8 +221,7 @@ class _LandmarkCanvas(QWidget):
         overlay = self._build_overlay()
         h, w = self.image_rgb.shape[:2]
         scale = self._effective_scale
-        # Visible sub-region of the image (in image pixels) -- crop *before*
-        # rasterizing, so a zoomed-in view of a large scan stays cheap.
+        # Visible sub-region of the image, croped before rasterizing, keeps it efficent 
         ix0 = max(0, int((0 - self._display_rect.x()) / scale))
         iy0 = max(0, int((0 - self._display_rect.y()) / scale))
         ix1 = min(w, int((self.width() - self._display_rect.x()) / scale) + 1)
@@ -254,8 +239,8 @@ class _LandmarkCanvas(QWidget):
             dest_y = round(self._display_rect.y() + iy0 * scale)
             painter.drawPixmap(dest_x, dest_y, scaled)
 
-        # The text drawn next to each dot *is* its actual label -- a plain
-        # default number until you double-click to rename it.
+        # The text next to each dot is the name, default to a number unless changed 
+        
         for label in self.order:
             pt = self.points.get(label)
             if pt is None:
@@ -273,7 +258,7 @@ class _LandmarkCanvas(QWidget):
         super().resizeEvent(event)
         self._recompute_geometry()
 
-    # --------------------------------------------------------- zoom / pan
+    # --------------------------------------------------------- zoom mechanics 
     def wheelEvent(self, event):
         if self.image_rgb is None:
             return
@@ -330,7 +315,7 @@ class _LandmarkCanvas(QWidget):
         else:
             super().keyReleaseEvent(event)
 
-    # -------------------------------------------------------------- mouse
+    # ----------------------------------------------------------------- mouse helpers
     def mousePressEvent(self, event):
         if self.image_rgb is None or event.button() != Qt.MouseButton.LeftButton:
             return
@@ -420,12 +405,9 @@ class _LandmarkCanvas(QWidget):
 
 
 class ReviewWindow(QWidget):
-    """The main workflow: one crop at a time, click to place a landmark
-    (freeform -- default-numbered, any order, any count), double-click to
-    rename it, drag/nudge to adjust, Blank/Damaged status, live centroid-
-    size measurement, Previous/Next/Close -- every navigation saves the
-    crop you're leaving. There's no preset/detection step, so placement is
-    fully synchronous (no worker thread, no per-crop cache warm-up).
+    """Workflow: Click to place a landmark,  double-click to
+    rename it, drag/nudge with arrow keys to adjust,
+    All navigation options save progress before leaving.
     """
 
     finished = pyqtSignal()
@@ -438,12 +420,12 @@ class ReviewWindow(QWidget):
         self.csv_path = ""
 
         self.index = 0
-        self.rows = []  # one dict per matched item, index-aligned
-        self._status = []  # "" | measured | blank | damaged, index-aligned
+        self.rows = []  # one line per image 
+        self._status = []  # "" | measured | blank | damaged
         self._points = {}  # index -> {label: (x, y)}
-        self._order = {}  # index -> [label, ...] in placement order
+        self._order = {}  # index -> [label, ...] in order
         self._image_cache = {}  # index -> (image_rgb, mask_or_None, warned_no_mask)
-        self._all_labels_seen = []  # ordered union of every label used
+        self._all_labels_seen = []  # Join based on lables 
 
         self._build_ui()
 
@@ -560,10 +542,8 @@ class ReviewWindow(QWidget):
         return self.matched_items[self.index]
 
     def _object_id_for(self, item):
-        """The object id from the optional segmetric.set metadata preset
-        (unrelated to landmark placement, which has no preset of its own
-        any more) -- None if no metadata preset is loaded or it has no
-        object-id column flagged.
+        """The object id from the optional segmetric.set metadata preset.
+        None if no preset is loaded
         """
         if self.metadata_preset is None or self.metadata_preset.object_id_column is None:
             return None

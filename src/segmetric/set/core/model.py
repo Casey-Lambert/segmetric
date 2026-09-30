@@ -4,9 +4,7 @@ from typing import Optional
 
 @dataclass
 class Segment:
-    """One underscore-separated token from a filename, as shown/edited in the
-    preset builder. raw_value is a live-preview convenience only -- it is
-    never written into a saved Preset.
+    """ _  (underscore) seperated parts of the file name. Spaces are autoconverted to _ by CV dectection
     """
 
     index: int
@@ -17,7 +15,7 @@ class Segment:
 
 @dataclass
 class Preset:
-    """A saved, position-keyed mapping from filename segments to CSV columns."""
+    """position-keyed map from filename converting to CSV columns."""
 
     name: str
     segments: list = field(default_factory=list)  # list[Segment]

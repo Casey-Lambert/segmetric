@@ -1,3 +1,5 @@
+
+
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from segmetric.errors import SegMetricError
@@ -8,12 +10,13 @@ from segmetric.tag.core.naming import DEFAULT_OUTPUT_FORMAT, OcrRegion
 from ..core.pipeline import run_prepare_job
 
 
+
 class PrepareJobWorker(QThread):
-    """Runs the combined tag -> scale -> summary job off the GUI thread."""
+    """Runs the combined tag -> scale -> summary job off GUI shell ."""
 
     progress = pyqtSignal(float, str)
     error = pyqtSignal(str)
-    finished_ok = pyqtSignal(object)  # PrepareJobResult
+    finished_ok = pyqtSignal(object)  # Prepare result
 
     def __init__(
         self,
@@ -67,3 +70,10 @@ class PrepareJobWorker(QThread):
                 "An unexpected error occurred. See the per-stage log files "
                 "(segmetric_tag / segmetric_scale) in the output folder for details."
             )
+
+
+
+
+
+
+

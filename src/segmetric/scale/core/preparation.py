@@ -1,7 +1,9 @@
+
 import cv2
 import numpy as np
 
 from .detection import BLOB_MAX_ASPECT, BLOB_MIN_ASPECT, PREPARE_BLOB_MAX_AREA, PREPARE_BLOB_MIN_AREA, detect_markers
+
 
 MIN_MARKERS_FOR_PREPARE = 3
 PREPARE_PADDING = 4
@@ -19,24 +21,7 @@ def prepare_image(
     blob_min_aspect=BLOB_MIN_ASPECT,
     blob_max_aspect=BLOB_MAX_ASPECT,
 ):
-    """Crop image_bgr tight to its ArUco markers' corner bounding box, then
-    upscale -- matching the notebook's Cell 7 step (crop_image_to_square +
-    SCALE_UP=2.0, cubic interpolation).
-
-    This step runs before both scale measurement and the final crop so that
-    the measured mm/pixel and the saved cropped image are calibrated to the
-    same pixel space -- exactly how the notebook's Cell 9 operated on
-    Prepared_Crops (Cell 7's output), not on raw split panels.
-
-    detector should be built with build_prepare_detector (a wider
-    adaptive-threshold window than the final pass's detector -- see
-    core.detection -- since markers are small relative to the full raw,
-    un-cropped panel here). blob_min_area/blob_max_area default to that
-    same prepare-pass range for the same reason.
-
-    Returns the prepared image, or None if fewer than 3 markers were found
-    (matching Cell 7's own n_found >= 3 requirement).
-    """
+    
     corners, ids = detect_markers(
         image_bgr,
         detector,
@@ -64,3 +49,5 @@ def prepare_image(
         )
 
     return cropped
+
+

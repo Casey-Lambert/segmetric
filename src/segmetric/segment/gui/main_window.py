@@ -1,3 +1,4 @@
+
 import os
 
 from PyQt6.QtWidgets import (
@@ -41,7 +42,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._update_nav_state()
 
-    # ------------------------------------------------------------------ UI
+    # -----------------------------------------------------------------GUI
     def _build_ui(self):
         central = QWidget()
         outer = QVBoxLayout(central)
@@ -113,11 +114,11 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         return page
 
-    # ------------------------------------------------------------- logging
+    # ----------------------------------------------
     def _show_error(self, message):
         QMessageBox.critical(self, "SegMetric.Segment — Error", message)
 
-    # --------------------------------------------------------- navigation
+    # -----------------------------------------------------navigation
     def _update_nav_state(self, *_args):
         idx = self.stack.currentIndex()
         self.back_btn.setVisible(idx not in (PAGE_SETUP, PAGE_REVIEW))
@@ -153,7 +154,7 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentIndex(PAGE_SETUP)
         self._update_nav_state()
 
-    # ----------------------------------------------------------- matching
+    # -----------------------------------------------------------pairing data
     def _begin_matching(self):
         try:
             matched, unmatched, no_mask = match_crops(
@@ -181,7 +182,7 @@ class MainWindow(QMainWindow):
         self.matched_crops = matched
 
         if not matched:
-            self._show_error("No crops matched a scale row -- nothing to process.")
+            self._show_error("No files/crops matched a scale row -- nothing to process.")
             return False
 
         if unmatched:
@@ -215,7 +216,7 @@ class MainWindow(QMainWindow):
     def _update_output_summary(self):
         self.summary_label.setText(f"{len(self.matched_crops)} crop(s) ready to review.")
 
-    # -------------------------------------------------------------- output
+    # ------------------------------------------------------------output
     def on_browse_output(self):
         folder = QFileDialog.getExistingDirectory(self, "Select output folder")
         if not folder:
@@ -247,3 +248,5 @@ class MainWindow(QMainWindow):
         )
         self.stack.setCurrentIndex(PAGE_OUTPUT)
         self._update_nav_state()
+
+

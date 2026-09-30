@@ -1,3 +1,4 @@
+
 import logging
 import os
 import time
@@ -42,6 +43,7 @@ def _make_panels_output_dir(output_folder):
     return panels_dir
 
 
+
 def _make_logger(panels_dir):
     logger = logging.getLogger(f"segmetric.tag.pipeline.{id(panels_dir)}")
     logger.setLevel(logging.ERROR)
@@ -70,20 +72,9 @@ def run_panel_split_job(
     should_stop=None,
     output_format=DEFAULT_OUTPUT_FORMAT,
 ):
-    """Split every PDF/PNG/JPG/TIFF in input_folder into a rows x cols grid of
-    panels and save them to <output_folder>/panels/ as output_format files
-    (tiff/png/jpeg).
+   
 
-    progress_cb, if given, is called as progress_cb(fraction_0_to_1, message).
-    Per-file failures are logged and skipped rather than aborting the whole job;
-    invalid parameters (bad rows/cols, missing folders) raise SegMetricError
-    immediately. Full tracebacks for skipped files go to segmetric_tag.log inside
-    the output folder.
-
-    should_stop, if given, is a zero-arg callable checked between files and
-    between panels; when it returns True the job stops early (after finishing
-    whatever panel is currently being saved) and JobResult.interrupted is set.
-    """
+   
     if rows < 1 or cols < 1:
         raise SegMetricError("Rows and columns must both be at least 1.")
 

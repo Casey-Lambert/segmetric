@@ -1,16 +1,12 @@
+
+
 from dataclasses import dataclass, field
 from typing import Optional
 
 
 @dataclass
 class FilterSettings:
-    """The 7 tunable parameters behind core.masking.generate_mask -- matches
-    the notebook's WING_PARAMS dict exactly (per-anatomy masking presets).
-
-    `name` is a display-only label (e.g. "Forewing", "Custom: femur_v2") --
-    it plays no part in generate_mask's math, but round-trips through
-    save/load so the "filter used" output column (§7) can report something
-    meaningful instead of a raw parameter dump.
+    """The 7 tunable parameters behind core.masking.generate_mask.
     """
 
     first_pass_factor: float
@@ -23,8 +19,8 @@ class FilterSettings:
     name: str = ""
 
 
-# The notebook's WING_PARAMS values, unaltered. Selectable as-is or as a
-# starting point to customize (segmetric.mask GUI's filter picker, options 1/2).
+# Selectable as-is or as starting point to customize to whatever is being processed 
+
 DEFAULT_FILTERS = {
     "Forewing": FilterSettings(
         first_pass_factor=0.40,
@@ -62,17 +58,15 @@ DEFAULT_FILTERS = {
 @dataclass
 class FilterGroup:
     """A mixed-anatomy object-id -> filter assignment: one filter applies
-    to every id in `object_ids` (e.g. object_ids=["AA", "AB"] sharing one
-    filter).
+    to every id in `object_ids`
     """
 
-    object_ids: list = field(default_factory=list)  # list[str], no leading '_'
+    object_ids: list = field(default_factory=list)  # list[str], ensures no leading '_'
     filter: Optional[FilterSettings] = None
 
 
-# A zeroed starting point for "create a new filter from scratch" (§3 item 4).
-# Not a usable masking configuration on its own -- the GUI flags it as a
-# placeholder to tune before running.
+# A zeroed starting point for "create a new filter from scratch" 
+# Not a usable masking configuration on its own, flagged placeholder to change before running.
 BLANK_FILTER = FilterSettings(
     first_pass_factor=0.0,
     normal_thresh=0.0,
@@ -83,3 +77,5 @@ BLANK_FILTER = FilterSettings(
     min_blob=0,
     name="Blank",
 )
+
+

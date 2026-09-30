@@ -1,3 +1,5 @@
+
+
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from segmetric.errors import SegMetricError
@@ -10,7 +12,7 @@ class MaskJobWorker(QThread):
 
     progress = pyqtSignal(float, str)
     error = pyqtSignal(str)
-    finished_ok = pyqtSignal(object)  # MaskJobResult
+    finished_ok = pyqtSignal(object)  # Mask result
 
     def __init__(self, matched_crops, filter_resolver, output_folder, metadata_preset=None):
         super().__init__()
@@ -34,3 +36,6 @@ class MaskJobWorker(QThread):
             self.error.emit(str(exc))
         except Exception:
             self.error.emit("An unexpected error occurred while running the batch.")
+
+
+

@@ -2,14 +2,6 @@ import numpy as np
 
 
 def measure_cell(cell_mask, mm_per_pixel):
-    """Plain axis-aligned bounding-box measurement of a selected cell mask
-    (uint8, values 0/1) -- matches both reference notebooks' measure_cell()
-    exactly. Used for every step in every preset (not segmetric.mask's
-    rotate-to-long-axis measurement, which doesn't suit a small, arbitrarily
-    shaped cell selection the way it suits a whole wing/leg silhouette).
-
-    Returns dict(area_px, area_mm2, bbox_w_px, bbox_h_px, bbox_w_mm, bbox_h_mm).
-    """
     area_px = int(np.sum(cell_mask > 0))
     area_mm2 = area_px * (mm_per_pixel ** 2)
     coords = np.argwhere(cell_mask > 0)

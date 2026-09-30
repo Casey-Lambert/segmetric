@@ -1,18 +1,9 @@
-"""Combine whichever of mask/segment/landmark's own measurement CSVs exist
-in a segmetric.measure output folder into one measure_summary.csv.
 
-Unlike segmetric.prepare's own core/summary.py (which just copies scale's
-scales.csv and derives metadata columns by re-parsing each row's
-file_name -- there's only ever one real data CSV in that pipeline), this
-module does a genuine multi-CSV outer join: mask/segment/landmark each
-already write their own metadata/object_id columns into their own CSV
-(every one of them independently calls
-segmetric.prepare.core.metadata.apply_preset_to_filename when saving), so
-there's nothing to re-derive here -- only columns to join and, where two
-stages happen to use the same column name (segment and landmark both
-write a literal "status" column; mask has both "tag" and "mask_status"),
-to keep unambiguous.
+"""Combins mask/segment/landmark results
+in a segmetric.measure output folder into one measure_summary.csv.
 """
+
+
 import csv
 import os
 
@@ -21,8 +12,10 @@ SEGMENT_CSV = "segment_measurements.csv"
 LANDMARK_CSV = "landmark_measurements.csv"
 SUMMARY_FILENAME = "measure_summary.csv"
 
-# Fixed mask -> segment -> landmark priority/order, reused for both the
-# stage-column prefixing and the shared-column per-row fallback lookup.
+
+# Fixed order mask -> segment -> landmark p
+# stage-column prefixing/shared-column per-row fallback lookup.
+
 _STAGE_FILES = [
     ("mask", MASK_CSV),
     ("segment", SEGMENT_CSV),
@@ -39,27 +32,13 @@ def _read_csv_rows(path):
 
 
 def write_measure_summary_csv(output_folder, metadata_columns=()):
-    """Outer-join by file_name across whichever of mask_measurements.csv /
+    
+    """Outer-join by file_name across mask_measurements.csv /
     segment_measurements.csv / landmark_measurements.csv exist directly in
-    output_folder. Which stages are included is decided purely by file
-    presence (not by an in-memory "which stages ran this session" flag),
-    so this can be regenerated later against a folder that accumulated
-    stages across multiple separate segmetric-measure runs. Returns None
-    (writes nothing) if none of the three exist yet.
+    output_folder. 
 
-    Column layout: file_name, then metadata_columns (in the order given)
-    followed by "object_id" -- each pulled unprefixed from the first
-    stage, in mask -> segment -> landmark priority, whose own CSV actually
-    has that column and a row for that file_name; not repeated. Then every
-    remaining column from each present stage's CSV, renamed
-    f"{stage}_{original_column}" unconditionally (e.g. mask_length_mm,
-    segment_status, landmark_status) -- prefixing is applied regardless of
-    whether a collision would actually occur this run, so column names
-    stay predictable no matter which subset of stages was used. A
-    file_name missing from one stage's CSV gets "" for that stage's
-    columns. Row order: the union of file_names, first-seen walking
-    mask -> segment -> landmark.
     """
+
     stage_data = []  # [(stage_name, fieldnames, {file_name: row})]
     for stage_name, csv_filename in _STAGE_FILES:
         path = os.path.join(output_folder, csv_filename)
@@ -129,3 +108,5 @@ def write_measure_summary_csv(output_folder, metadata_columns=()):
 
 def summary_path_for(output_folder):
     return os.path.join(output_folder, SUMMARY_FILENAME)
+
+

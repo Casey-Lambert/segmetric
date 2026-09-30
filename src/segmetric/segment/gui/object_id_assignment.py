@@ -1,3 +1,4 @@
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -58,13 +59,7 @@ class _GroupRow(QGroupBox):
 
 
 class ObjectIdAssignmentWidget(QWidget):
-    """Mixed-batch (advanced): many-to-one object-id -> SegmentPreset
-    grouping over whatever object ids survived the setup screen's
-    object-id filter. Object IDs are comma-separated per group, not
-    one-per-preset. Next stays blocked (via ready_changed) until every
-    discovered object id is claimed by exactly one group.
-    """
-
+  
     ready_changed = pyqtSignal(bool)
 
     def __init__(self, parent=None):
@@ -107,7 +102,7 @@ class ObjectIdAssignmentWidget(QWidget):
         scroll.setWidget(self.groups_container)
         outer.addWidget(scroll, stretch=1)
 
-    # ----------------------------------------------------------- discovery
+    #---------------------------------------------------
     def set_discovered_object_ids(self, object_id_counts: dict):
         """object_id_counts: {object_id: n_crops} -- already filtered by
         the setup screen's object-id filter checklist.
@@ -121,7 +116,7 @@ class ObjectIdAssignmentWidget(QWidget):
             self.discovered_label.setText("No object ids found among the matched crops.")
         self._update_coverage()
 
-    # -------------------------------------------------------------- groups
+    #---------------------------------------------------------
     def add_group(self):
         row = _GroupRow(len(self._rows) + 1)
         row.changed.connect(self._update_coverage)
@@ -142,7 +137,7 @@ class ObjectIdAssignmentWidget(QWidget):
         for row in list(self._rows):
             self._remove_group(row)
 
-    # -------------------------------------------------------------- coverage
+    # --------------------------------------------------------
     def _claims(self):
         """Return (claimed: {object_id: [group_indices]}, unknown: set[str])."""
         claimed = {}
@@ -188,7 +183,7 @@ class ObjectIdAssignmentWidget(QWidget):
                 resolver[object_id] = preset
         return resolver
 
-    # -------------------------------------------------------------- template
+    #----------------------------------------------------------
     def on_load_mapping(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Load mapping template", "", "JSON files (*.json)"
@@ -208,7 +203,7 @@ class ObjectIdAssignmentWidget(QWidget):
 
     def on_save_mapping(self):
         if not self._rows:
-            QMessageBox.warning(self, "SegMetric.Segment", "No groups to save yet.")
+            QMessageBox.warning(self, "SegMetric.Segment", "Nothing to save yet.")
             return
         path, _ = QFileDialog.getSaveFileName(
             self, "Save mapping template", "segment_object_id_mapping.json", "JSON files (*.json)"
