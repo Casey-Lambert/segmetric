@@ -114,6 +114,6 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Installed separately , but . Once installed, running the command `pytest` runs every function under `tests/` and prints a pass/fail summary. This can be used if the user makes modifications to the code base and wants to verify those changes are compatible with the code base. The testing suite was developed using Claude Code Sonnet 5.\
+Installed separately , but . Once installed, running the command `pytest` runs every function under `tests/` and prints a pass/fail summary. This can be used if the user makes modifications to the code base and wants to verify those changes are compatible with the code base. The testing suite was developed using Claude Code Sonnet 5.
 \
 \
