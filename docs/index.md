@@ -4,9 +4,9 @@ title: SegMetric
 permalink: /
 ---
 
-<p align="center">
-  <img src="assets/images/logo.png" alt="SegMetric" width="600">
-</p>
+<div style="text-align: center;">
+  <img src="assets/images/logo.png" alt="SegMetric" width="600" style="display: block; margin: 0 auto;">
+</div>
 
 SegMetric is eight PyQt6 desktop tools that cover a full workflow: split a
 scan into panels, build a naming/metadata scheme, compute a real-world
