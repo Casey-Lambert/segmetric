@@ -30,7 +30,17 @@ Tools for managing measuring
 
 -   **`segmetric.measure`** — A convience shell similar to **`segmetric.prepare`** , consolidating `mask`, `segment`, and `landmark`. Load in scale, crops, optional metadata preset, and then set an output folder. Then tab trough the measurement type, selecting the combination of tools you want to run. Load in or create the various .JSON presets. Runs will always progress in the order Mask → Segment → Landmark. If Mask is run, downstream processes automatically pick up and apply the results. All processes work identical to the `mask`, `segment`, and `landmark` standalone processes. Output: each enabled stage's usual files, plus one `measure_summary.csv` outer-joining `mask_measurements.csv` / `segment_measurements.csv` / `landmark_measurements.csv` exist, by file name.\
 
-## Install via terminal
+## Install (PyPI)
+
+This installs every SegMetric tool. Requires Python 3.10+.
+
+``` bash
+pip install segmetric-toolkit
+```
+
+If you want to edit the code itself (or run the tests), use the source install below instead.
+
+## Install from source (conda, for development and editing)
 
 ``` bash
 conda env create -f environment.yml
