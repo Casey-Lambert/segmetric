@@ -32,14 +32,11 @@ landmark each object for measurement.
 pip install segmetric-toolkit
 ```
 
-This installs every tool above as a console command (`segmetric-tag`,
-`segmetric-set`, `segmetric-scale`, `segmetric-prepare`, `segmetric-mask`,
-`segmetric-segment`, `segmetric-landmark`, `segmetric-measure`). Requires
-Python 3.10+.
+This installs the SegMetric suite. Requires Python 3.10+.
 
-If you want to edit the code itself, see the
+If you want to edit the code: See the
 [source install instructions](https://github.com/{{ site.repository }}#install-from-source-conda-for-development-and-editing)
-in the repository README.
+in the repository.
 
 ## Links
 
